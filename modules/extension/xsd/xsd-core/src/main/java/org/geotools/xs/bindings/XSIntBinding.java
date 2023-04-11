@@ -17,6 +17,7 @@
 package org.geotools.xs.bindings;
 
 import javax.xml.namespace.QName;
+import org.apache.commons.lang3.StringUtils;
 import org.geotools.xs.XS;
 import org.geotools.xsd.InstanceComponent;
 import org.geotools.xsd.SimpleBinding;
@@ -85,7 +86,9 @@ public class XSIntBinding implements SimpleBinding {
     @Override
     public Object parse(InstanceComponent instance, Object value) throws Exception {
         String text = (String) value;
-
+        if (StringUtils.isBlank(text)) {
+            return null;
+        }
         if (text.charAt(0) == '+') {
             text = text.substring(1);
         }

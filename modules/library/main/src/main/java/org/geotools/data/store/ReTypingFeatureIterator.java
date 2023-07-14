@@ -20,6 +20,8 @@ import org.geotools.api.feature.IllegalAttributeException;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 
@@ -45,7 +47,12 @@ public class ReTypingFeatureIterator implements SimpleFeatureIterator {
             SimpleFeatureIterator delegate, SimpleFeatureType source, SimpleFeatureType target) {
         this.delegate = delegate;
         this.target = target;
-        types = typeAttributes(source, target);
+        try {
+            types = typeAttributes(source, target);
+        } catch (IllegalArgumentException e) {
+            delegate.close();
+            throw e;
+        }
         this.builder = new SimpleFeatureBuilder(target);
     }
 
@@ -77,13 +84,13 @@ public class ReTypingFeatureIterator implements SimpleFeatureIterator {
     }
 
     /**
-     * Supplies mapping from origional to target FeatureType.
+     * Supplies mapping from original to target FeatureType.
      *
-     * <p>Will also ensure that origional can cover target
+     * <p>Will also ensure that original can cover target
      *
      * @param target Desired FeatureType
-     * @param original Origional FeatureType
-     * @return Mapping from originoal to target FeatureType
+     * @param original Original FeatureType
+     * @return Mapping from original to target FeatureType
      * @throws IllegalArgumentException if unable to provide a mapping
      */
     protected AttributeDescriptor[] typeAttributes(
@@ -95,7 +102,7 @@ public class ReTypingFeatureIterator implements SimpleFeatureIterator {
 
         if (target.getAttributeCount() > original.getAttributeCount()) {
             throw new IllegalArgumentException(
-                    "Unable to retype  FeatureReader<SimpleFeatureType, SimpleFeature> (origional does not cover requested type)");
+                    "Unable to retype FeatureReader<SimpleFeatureType, SimpleFeature> (original does not cover requested type)");
         }
 
         String xpath;
@@ -106,11 +113,38 @@ public class ReTypingFeatureIterator implements SimpleFeatureIterator {
             xpath = attrib.getLocalName();
             types[i] = attrib;
 
-            if (!attrib.equals(original.getDescriptor(xpath))) {
-                throw new IllegalArgumentException(
-                        "Unable to retype  FeatureReader<SimpleFeatureType, SimpleFeature> (origional does not cover "
-                                + xpath
-                                + ")");
+            AttributeDescriptor origAttrib = original.getDescriptor(xpath);
+
+            if (!origAttrib.equals(attrib)) {
+                if (origAttrib instanceof GeometryDescriptor) {
+                    if (!(attrib instanceof GeometryDescriptor)) {
+                        throw new IllegalArgumentException(
+                                "Unable to retype "
+                                        + origAttrib.getLocalName()
+                                        + " (target isn't a geometry attribute).");
+                    }
+                    CoordinateReferenceSystem origCrs =
+                            ((GeometryDescriptor) origAttrib).getCoordinateReferenceSystem();
+                    if (origCrs != null
+                            && !origCrs.equals(
+                                    ((GeometryDescriptor) attrib).getCoordinateReferenceSystem())) {
+                        throw new IllegalArgumentException(
+                                "Unable to retype "
+                                        + original.getName()
+                                        + " (target have a different crs).");
+                    }
+                }
+                if (origAttrib == null
+                        || !attrib.getType()
+                                .getBinding()
+                                .isAssignableFrom(origAttrib.getType().getBinding())) {
+                    throw new IllegalArgumentException(
+                            "Unable to retype "
+                                    + original.getName()
+                                    + " (original does not cover "
+                                    + xpath
+                                    + ")");
+                }
             }
         }
 

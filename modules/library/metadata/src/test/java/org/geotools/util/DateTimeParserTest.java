@@ -22,6 +22,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -51,7 +52,10 @@ public class DateTimeParserTest extends Assert {
 
     @Parameterized.Parameters
     public static List<Object[]> locales() {
-        return List.of(new Object[] {Locale.ENGLISH}, new Object[] {Locale.forLanguageTag("NO")});
+        List<Object[]> list = new LinkedList<>();
+        list.add(new Object[] {Locale.ENGLISH});
+        list.add(new Object[] {Locale.forLanguageTag("NO")});
+        return list;
     }
 
     @After

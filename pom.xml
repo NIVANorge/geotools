@@ -2414,7 +2414,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.8.0</version>
+            <version>3.11.0</version>
             <configuration>
               <compilerArgs>
                 <arg>-XDcompilePolicy=simple</arg>
@@ -2451,8 +2451,10 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.8.0</version>
+            <version>3.11.0</version>
             <configuration>
+              <source>1.8</source>
+              <target>1.8</target>
               <fork>true</fork>
               <compilerArgs combine.children="append">
                 <arg>-XDcompilePolicy=simple</arg>
@@ -2624,6 +2626,16 @@
           </plugin>
         </plugins>
       </build>
+    </profile>
+    <!-- Java 8 for JDK > 9 -->
+    <profile>
+      <id>javac-release</id>
+      <activation>
+        <jdk>[11,)</jdk>
+      </activation>
+      <properties>
+        <maven.compiler.release>8</maven.compiler.release>
+      </properties>
     </profile>
   </profiles>
 </project>

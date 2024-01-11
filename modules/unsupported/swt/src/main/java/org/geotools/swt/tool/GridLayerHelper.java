@@ -20,6 +20,8 @@ package org.geotools.swt.tool;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.feature.FeatureIterator;
@@ -28,8 +30,6 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.Layer;
 import org.geotools.map.MapContent;
 import org.geotools.swt.utils.Utils;
-import org.geotools.api.geometry.Position;
-import org.geotools.api.referencing.operation.MathTransform;
 
 /**
  * Helper class used by {@code InfoTool} to query {@code MapLayers} with raster feature data ({@code
@@ -118,8 +118,8 @@ public class GridLayerHelper extends InfoToolHelper<List<Number>> {
     }
 
     /**
-     * Convert the Object returned by {@linkplain GridCoverage2D#evaluate(Position)} into an
-     * array of {@code Numbers}.
+     * Convert the Object returned by {@linkplain GridCoverage2D#evaluate(Position)} into an array
+     * of {@code Numbers}.
      *
      * @param objArray an Object representing a primitive array
      * @return a new array of Numbers

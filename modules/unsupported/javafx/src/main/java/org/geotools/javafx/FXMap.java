@@ -21,7 +21,6 @@ package org.geotools.javafx;
  * @author Jochen Saalfeld (jochen@intevation.de)
  * @author Alexander Woestmann (awoestmann@intevation.de)
  */
-
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -50,7 +49,13 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.api.geometry.Bounds;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.geometry.GeneralBounds;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -62,13 +67,7 @@ import org.geotools.ows.wms.map.WMSLayer;
 import org.geotools.referencing.CRS;
 import org.geotools.renderer.lite.StreamingRenderer;
 import org.geotools.styling.StyleBuilder;
-import org.geotools.api.style.StyleFactory;
 import org.jfree.fx.FXGraphics2D;
-import org.geotools.api.feature.type.GeometryDescriptor;
-import org.geotools.api.filter.FilterFactory;
-import org.geotools.api.referencing.FactoryException;
-import org.geotools.api.referencing.NoSuchAuthorityCodeException;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * This class is going to Manage the Display of a Map based on a WFS Service. It should have some
@@ -192,12 +191,7 @@ public class FXMap extends Parent {
      * @param dimensionY map height
      * @param bounds Bounding box
      */
-    public FXMap(
-            WebMapServer wms,
-            Layer layer,
-            int dimensionX,
-            int dimensionY,
-            Bounds bounds)
+    public FXMap(WebMapServer wms, Layer layer, int dimensionX, int dimensionY, Bounds bounds)
             throws NoSuchAuthorityCodeException, FactoryException {
 
         System.setProperty("org.geotools.referencing.forceXY", "true");
@@ -407,8 +401,7 @@ public class FXMap extends Parent {
     public void setMapCRS(CoordinateReferenceSystem crs) {
         this.mapContent.getViewport().setCoordinateReferenceSystem(crs);
         try {
-            this.maxBBox =
-                    new GeneralBounds(new ReferencedEnvelope(maxBBox).transform(crs, true));
+            this.maxBBox = new GeneralBounds(new ReferencedEnvelope(maxBBox).transform(crs, true));
             this.layerBBox =
                     new GeneralBounds(new ReferencedEnvelope(layerBBox).transform(crs, true));
         } catch (Exception tEx) {

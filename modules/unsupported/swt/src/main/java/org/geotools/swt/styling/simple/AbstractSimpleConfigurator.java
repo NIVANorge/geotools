@@ -29,11 +29,11 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.style.Style;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.styling.SLD;
-import org.geotools.api.style.Style;
 import org.geotools.styling.StyleBuilder;
-import org.geotools.api.feature.simple.SimpleFeatureType;
 
 /**
  * This is here to save me some typing and ensure that the simple raster and feature configurators

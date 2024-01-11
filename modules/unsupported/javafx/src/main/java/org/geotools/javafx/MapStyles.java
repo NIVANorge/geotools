@@ -18,18 +18,18 @@
 package org.geotools.javafx;
 
 import java.awt.*;
-import org.geotools.factory.CommonFactoryFinder;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.identity.FeatureId;
 import org.geotools.api.style.FeatureTypeStyle;
 import org.geotools.api.style.Fill;
 import org.geotools.api.style.PolygonSymbolizer;
 import org.geotools.api.style.Rule;
 import org.geotools.api.style.Stroke;
 import org.geotools.api.style.Style;
-import org.geotools.styling.StyleBuilder;
 import org.geotools.api.style.StyleFactory;
 import org.geotools.api.style.Symbolizer;
-import org.geotools.api.filter.FilterFactory;
-import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.factory.CommonFactoryFinder;
+import org.geotools.styling.StyleBuilder;
 
 /** Created by Jochen Saalfeld <jochen.saalfeld@intevation.de> on 2/16/17. */
 public class MapStyles {

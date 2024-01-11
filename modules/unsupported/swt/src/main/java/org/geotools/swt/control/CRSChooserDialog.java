@@ -6,9 +6,9 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.swt.utils.Messages;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
 public class CRSChooserDialog extends Dialog {
     private final CRSChooser chooser = new CRSChooser();

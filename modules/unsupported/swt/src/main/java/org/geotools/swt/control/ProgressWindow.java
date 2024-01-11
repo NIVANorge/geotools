@@ -21,9 +21,9 @@ package org.geotools.swt.control;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.swt.widgets.Shell;
-import org.geotools.util.SimpleInternationalString;
 import org.geotools.api.util.InternationalString;
 import org.geotools.api.util.ProgressListener;
+import org.geotools.util.SimpleInternationalString;
 
 /**
  * Wrapper for geotools' {@link ProgressListener}.

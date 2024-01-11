@@ -50,15 +50,15 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
-import org.geotools.referencing.CRS;
-import org.geotools.referencing.ReferencingFactoryFinder;
-import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.geotools.swt.utils.Messages;
 import org.geotools.api.metadata.Identifier;
 import org.geotools.api.referencing.FactoryException;
 import org.geotools.api.referencing.ReferenceIdentifier;
 import org.geotools.api.referencing.crs.CRSAuthorityFactory;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.referencing.CRS;
+import org.geotools.referencing.ReferencingFactoryFinder;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.geotools.swt.utils.Messages;
 
 /**
  * Creates a Control for choosing a Coordinate Reference System.

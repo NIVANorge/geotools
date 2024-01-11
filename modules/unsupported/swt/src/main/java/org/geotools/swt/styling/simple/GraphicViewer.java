@@ -27,12 +27,12 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.geotools.api.style.Fill;
 import org.geotools.api.style.Graphic;
+import org.geotools.api.style.GraphicalSymbol;
 import org.geotools.api.style.Mark;
-import org.geotools.styling.SLD;
 import org.geotools.api.style.Stroke;
+import org.geotools.styling.SLD;
 import org.geotools.styling.StyleBuilder;
 import org.geotools.swt.utils.Messages;
-import org.geotools.api.style.GraphicalSymbol;
 
 /**
  * Allows editing/viewing of a Style Layer Descriptor "Graphic".

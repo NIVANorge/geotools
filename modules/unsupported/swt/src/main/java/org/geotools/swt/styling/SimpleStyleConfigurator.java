@@ -34,10 +34,11 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
-import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.api.data.SimpleFeatureSource;
-import org.geotools.factory.CommonFactoryFinder;
-import org.geotools.map.Layer;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.PropertyDescriptor;
 import org.geotools.api.style.FeatureTypeConstraint;
 import org.geotools.api.style.FeatureTypeStyle;
 import org.geotools.api.style.Fill;
@@ -54,6 +55,9 @@ import org.geotools.api.style.StyledLayerDescriptor;
 import org.geotools.api.style.Symbolizer;
 import org.geotools.api.style.TextSymbolizer;
 import org.geotools.api.style.UserLayer;
+import org.geotools.data.simple.SimpleFeatureCollection;
+import org.geotools.factory.CommonFactoryFinder;
+import org.geotools.map.Layer;
 import org.geotools.swt.styling.simple.AbstractSimpleConfigurator;
 import org.geotools.swt.styling.simple.FillViewer;
 import org.geotools.swt.styling.simple.GraphicViewer;
@@ -66,10 +70,6 @@ import org.geotools.swt.utils.Messages;
 import org.geotools.swt.utils.Utils;
 import org.geotools.util.factory.GeoTools;
 import org.geotools.xml.styling.SLDTransformer;
-import org.geotools.api.feature.simple.SimpleFeatureType;
-import org.geotools.api.feature.type.FeatureType;
-import org.geotools.api.feature.type.GeometryDescriptor;
-import org.geotools.api.feature.type.PropertyDescriptor;
 
 /**
  * Defines a "simple" StyleConfigurator for working with SLD documents.

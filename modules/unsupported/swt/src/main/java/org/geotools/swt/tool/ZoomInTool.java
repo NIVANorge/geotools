@@ -123,8 +123,7 @@ public class ZoomInTool extends AbstractZoomTool {
 
     /**
      * If the mouse was dragged, determines the bounds of the box that the user defined and passes
-     * this to the mapPane's {@link
-     * org.geotools.swing.JMapPane#setDisplayArea(Bounds) } method
+     * this to the mapPane's {@link org.geotools.swing.JMapPane#setDisplayArea(Bounds) } method
      *
      * @param ev the mouse event
      */

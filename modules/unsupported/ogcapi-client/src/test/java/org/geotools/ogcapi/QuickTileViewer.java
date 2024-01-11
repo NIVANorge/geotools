@@ -41,8 +41,10 @@ import org.geotools.api.data.DataStore;
 import org.geotools.api.data.DataStoreFinder;
 import org.geotools.api.data.FileDataStore;
 import org.geotools.api.data.FileDataStoreFinder;
-import org.geotools.data.geojson.store.GeoJSONDataStore;
 import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.style.Style;
+import org.geotools.data.geojson.store.GeoJSONDataStore;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.geopkg.GeoPkgDataStoreFactory;
 import org.geotools.map.FeatureLayer;
@@ -51,12 +53,10 @@ import org.geotools.map.MapContent;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.styling.SLD;
-import org.geotools.api.style.Style;
 import org.geotools.swing.JMapFrame;
 import org.geotools.util.URLs;
 import org.geotools.util.UnsupportedImplementationException;
 import org.geotools.util.logging.Logging;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.xml.sax.SAXException;
 
 public class QuickTileViewer {

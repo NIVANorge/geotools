@@ -27,9 +27,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
 public class TileMatrix extends org.geotools.ows.wmts.model.TileMatrix {
     static JsonFactory factory = new JsonFactory();

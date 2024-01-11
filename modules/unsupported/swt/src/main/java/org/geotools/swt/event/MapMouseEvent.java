@@ -114,7 +114,6 @@ public final class MapMouseEvent {
      * @return a new DirectPosition2D object for the world coordinates
      */
     public Position2D getMapPosition() {
-        return new Position2D(
-                geoCoords.getCoordinateReferenceSystem(), geoCoords.x, geoCoords.y);
+        return new Position2D(geoCoords.getCoordinateReferenceSystem(), geoCoords.x, geoCoords.y);
     }
 }

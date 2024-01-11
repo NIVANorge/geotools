@@ -19,6 +19,11 @@ package org.geotools.swt.tool;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import org.geotools.api.data.Query;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.Position2D;
@@ -31,11 +36,6 @@ import org.geotools.map.MapContent;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.geotools.api.feature.type.GeometryDescriptor;
-import org.geotools.api.filter.Filter;
-import org.geotools.api.filter.FilterFactory;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
-import org.geotools.api.referencing.operation.MathTransform;
 
 /**
  * Helper class used by {@code InfoTool} to query {@code MapLayers} with vector feature data.
@@ -110,8 +110,7 @@ public class VectorLayerHelper extends InfoToolHelper<SimpleFeatureCollection> {
      *     valid an empty collection will be returned
      * @throws IOException if the feature source for the layer cannot be accessed
      */
-    public SimpleFeatureCollection getInfo(Position2D pos, Object... params)
-            throws IOException {
+    public SimpleFeatureCollection getInfo(Position2D pos, Object... params) throws IOException {
 
         SimpleFeatureCollection collection = null;
         Layer layer = layerRef.get();

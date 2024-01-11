@@ -26,6 +26,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.MapBoundsEvent;
 import org.geotools.map.MapBoundsListener;
@@ -33,7 +34,6 @@ import org.geotools.swt.SwtMapPane;
 import org.geotools.swt.control.CRSChooserDialog;
 import org.geotools.swt.event.MapPaneAdapter;
 import org.geotools.swt.event.MapPaneEvent;
-import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * The {@link CoordinateReferenceSystem} button to put on the statusbar.

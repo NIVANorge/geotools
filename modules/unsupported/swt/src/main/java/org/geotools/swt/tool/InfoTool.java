@@ -26,6 +26,8 @@ import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.Property;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.geometry.Position2D;
@@ -38,8 +40,6 @@ import org.geotools.swt.utils.CursorManager;
 import org.geotools.swt.utils.Messages;
 import org.geotools.swt.utils.Utils;
 import org.locationtech.jts.geom.Geometry;
-import org.geotools.api.feature.Feature;
-import org.geotools.api.feature.Property;
 
 /**
  * A cursor tool to retrieve information about features that the user clicks on with the mouse.

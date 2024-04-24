@@ -1889,6 +1889,7 @@ public class NetCDFMosaicReaderTest {
 
     @Test
     public void testGranuleSourceFileView() throws Exception {
+
         File testDir = tempFolder.newFolder("multi-coverage-fileview");
         URL testUrl = fileToUrl(testDir);
         FileUtils.copyDirectory(TestData.file(this, "multi-coverage"), testDir);
@@ -1916,8 +1917,12 @@ public class NetCDFMosaicReaderTest {
                 nc2 = it.next();
             }
 
-            assertEquals("2017-02-06 00:00:00.0", nc1.getAttribute("time").toString());
-            assertEquals("2017-02-06 12:00:00.0", nc2.getAttribute("time").toString());
+            assertEquals(
+                    "2017-02-06T00:00:00.000Z",
+                    ConvertersHack.convert(nc1.getAttribute("time"), String.class));
+            assertEquals(
+                    "2017-02-06T12:00:00.000Z",
+                    ConvertersHack.convert(nc2.getAttribute("time"), String.class));
         } finally {
             if (reader != null) {
                 reader.dispose();

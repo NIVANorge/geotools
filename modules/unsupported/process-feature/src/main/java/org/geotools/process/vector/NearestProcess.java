@@ -80,9 +80,9 @@ public class NearestProcess implements VectorProcess {
                     CoordinateReferenceSystem crs,
             @DescribeParameter(
                             name = "numFeatures",
-                            min = 1,
-                            description = "Number of nearest features to return.")
-                    int numFeatures)
+                            min = 0,
+                            description = "Number of nearest features to return. (default is 1)")
+                    Integer numFeatures)
             throws ProcessException {
         try {
             MathTransform crsTransform = null;
@@ -98,7 +98,9 @@ public class NearestProcess implements VectorProcess {
                 throw new ProcessException(
                         "The CRS parameter was not provided and the feature collection does not have a default one either");
             }
-
+            if (numFeatures == null) {
+                numFeatures = 1;
+            }
             SimpleFeatureType targetFeatureType =
                     createTargetFeatureType(featureCollection.getSchema(), crs);
             NearestFeatureCollection results =

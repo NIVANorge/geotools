@@ -17,6 +17,7 @@
 package org.geotools.jdbc;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Primary key of a table.
@@ -51,5 +52,14 @@ public class PrimaryKey {
         }
 
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return "PK of "
+                + tableName
+                + " ("
+                + columns.stream().map(c -> c.getName()).collect(Collectors.joining(", "))
+                + ")";
     }
 }

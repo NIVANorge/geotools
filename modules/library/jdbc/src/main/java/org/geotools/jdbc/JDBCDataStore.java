@@ -1026,19 +1026,23 @@ public final class JDBCDataStore extends ContentDataStore implements GmlObjectSt
      */
     protected PrimaryKey getPrimaryKey(ContentEntry entry) throws IOException {
         JDBCState state = (JDBCState) entry.getState(Transaction.AUTO_COMMIT);
-
         if (state.getPrimaryKey() == null) {
+            getLogger().fine("Looking up primary key for " + entry.getTypeName());
             synchronized (this) {
                 if (state.getPrimaryKey() == null) {
                     // get metadata from database
                     Connection cx = createConnection();
-
                     try {
                         PrimaryKey pkey = null;
                         String tableName = entry.getName().getLocalPart();
                         if (virtualTables.containsKey(tableName)) {
+
                             VirtualTable vt = virtualTables.get(tableName);
                             if (vt.getPrimaryKeyColumns().size() == 0) {
+                                getLogger()
+                                        .fine(
+                                                tableName
+                                                        + " is a virtualTable without primary key.");
                                 pkey = new NullPrimaryKey(tableName);
                             } else {
                                 List<ColumnMetadata> metas =
@@ -1059,12 +1063,18 @@ public final class JDBCDataStore extends ContentDataStore implements GmlObjectSt
                                     kcols.add(new NonIncrementingPrimaryKeyColumn(pkName, binding));
                                 }
                                 pkey = new PrimaryKey(tableName, kcols);
+                                getLogger()
+                                        .fine(
+                                                tableName
+                                                        + " is a virtualTable with primary key: "
+                                                        + pkey);
                             }
                         } else {
                             try {
                                 pkey =
                                         primaryKeyFinder.getPrimaryKey(
                                                 this, databaseSchema, tableName, cx);
+                                getLogger().fine(tableName + " has primary key: " + pkey);
                             } catch (SQLException e) {
                                 LOGGER.log(
                                         Level.WARNING,

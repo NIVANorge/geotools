@@ -2060,6 +2060,10 @@ public class StreamingRenderer implements GTRenderer {
                 SortBy[] sortBy = styleFactory.getSortBy(fts.getOptions());
                 lfts.sortBy = sortBy;
 
+                // check if the rendering transformations should be oversampled
+                lfts.rtOversample =
+                        Boolean.valueOf(fts.getOptions().get(FeatureTypeStyle.RT_OVERASAMPLE));
+
                 if (screenMapEnabled(lfts)) {
                     int renderingBuffer = getRenderingBuffer();
                     lfts.screenMap =
@@ -2310,7 +2314,8 @@ public class StreamingRenderer implements GTRenderer {
         @SuppressWarnings("unchecked")
         final FeatureSource<FeatureType, Feature> featureSource =
                 (FeatureSource<FeatureType, Feature>) layer.getFeatureSource();
-        Expression transform = featureTypeStyles.get(0).transformation;
+        LiteFeatureTypeStyle fts = featureTypeStyles.get(0);
+        Expression transform = fts.transformation;
 
         // grab the source crs and geometry attribute
         final CoordinateReferenceSystem sourceCrs;
@@ -2345,6 +2350,7 @@ public class StreamingRenderer implements GTRenderer {
             // The first source attributes, the latter talks tx output attributes
             // so they have to be applied before and after the transformation respectively
             RenderingTransformationHelper helper = new GCRRenderingTransformationHelper(layer);
+            helper.setOversampleEnabled(fts.rtOversample);
 
             Object result =
                     helper.applyRenderingTransformation(
@@ -2765,7 +2771,7 @@ public class StreamingRenderer implements GTRenderer {
         ScreenMap screenMap = liteFeatureTypeStyle.screenMap;
         if (handler != null
                 && featureCrs != null
-                && !CRS.equalsIgnoreMetadata(handler.getSourceCRS(), featureCrs)) {
+                && !CRS.isEquivalent(handler.getSourceCRS(), featureCrs)) {
             try {
                 handler =
                         ProjectionHandlerFinder.getHandler(
@@ -3138,7 +3144,7 @@ public class StreamingRenderer implements GTRenderer {
         GridGeometry2D readGG;
         if (sourceCRS == null
                 || destinationCrs == null
-                || CRS.equalsIgnoreMetadata(destinationCrs, sourceCRS)) {
+                || CRS.isEquivalent(destinationCrs, sourceCRS)) {
             readGG = new GridGeometry2D(new GridEnvelope2D(screenSize), originalMapExtent);
         } else {
             // reprojection involved, read a bit more pixels to account for rotation
@@ -4314,16 +4320,19 @@ public class StreamingRenderer implements GTRenderer {
             try {
                 Rectangle mapRasterArea = readGG.getGridRange2D();
                 final AffineTransform worldToScreen =
-                        RendererUtilities.worldToScreenTransform(mapExtent, mapRasterArea);
+                        RendererUtilities.worldToScreenTransform(
+                                readGG.getEnvelope2D(), mapRasterArea);
                 gcr =
                         new GridCoverageRenderer(
-                                mapExtent.getCoordinateReferenceSystem(),
-                                mapExtent,
+                                readGG.getCoordinateReferenceSystem(),
+                                readGG.getEnvelope2D(),
                                 mapRasterArea,
                                 worldToScreen,
                                 interpolationHints);
+
                 gcr.setAdvancedProjectionHandlingEnabled(isAdvancedProjectionHandlingEnabled());
                 gcr.setWrapEnabled(isMapWrappingEnabled());
+                gcr.setOversample(oversample);
                 RenderedImage ri =
                         gcr.renderImage(
                                 reader,

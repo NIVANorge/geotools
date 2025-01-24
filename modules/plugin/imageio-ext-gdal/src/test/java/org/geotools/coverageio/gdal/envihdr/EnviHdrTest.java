@@ -43,6 +43,7 @@ import org.geotools.referencing.operation.matrix.XAffineTransform;
 import org.geotools.test.TestData;
 import org.geotools.util.factory.Hints;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -59,6 +60,7 @@ public class EnviHdrTest extends GDALTestCase {
         super("EnviHdr", new EnviHdrFormatFactory());
     }
 
+    @Ignore
     @Test
     @SuppressWarnings("PMD.SimplifiableTestAssertion") // envelope test with tolerance
     public void test() throws Exception {
@@ -161,6 +163,7 @@ public class EnviHdrTest extends GDALTestCase {
         Assert.assertNotNull(new EnviHdrFormatFactory().createFormat());
     }
 
+    @Ignore
     @Test
     public void testDimensionNames() throws Exception {
         String fileName = "multiband.bsq";

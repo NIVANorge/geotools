@@ -38,9 +38,7 @@ public class ComplexFeatureIteratorImpl implements FeatureIterator<Feature> {
 
     private XmlComplexFeatureParser parser;
 
-    private Feature parsedFeature;
-
-    private boolean hasNextCalled;
+    private Feature nextFeature;
 
     /**
      * Initialises a new instance of ComplexFeatureIteratorImpl.
@@ -49,46 +47,38 @@ public class ComplexFeatureIteratorImpl implements FeatureIterator<Feature> {
      */
     public ComplexFeatureIteratorImpl(XmlComplexFeatureParser parser) {
         this.parser = parser;
-        this.parsedFeature = null;
-        this.hasNextCalled = false;
+        parseNext();
+    }
+
+    private void parseNext() {
+        try {
+            nextFeature = parser.parse();
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+        }
     }
 
     @Override
     public boolean hasNext() {
-        this.hasNextCalled = true;
-        try {
-            parsedFeature = parser.parse();
-            return parsedFeature != null;
-        } catch (IOException e) {
-            LOGGER.log(Level.FINER, e.getMessage(), e);
-            close();
-            return false;
-        }
+        return nextFeature != null;
     }
 
     @Override
     public Feature next() throws NoSuchElementException {
-        if (!hasNextCalled) {
-            if (hasNext()) {
-                this.hasNextCalled = false;
-                return parsedFeature;
-            } else {
-                close();
-                return null;
-            }
-        } else {
-            this.hasNextCalled = false;
-            return parsedFeature;
+        if (nextFeature == null) {
+            throw new NoSuchElementException();
         }
+        final Feature returnFeature = nextFeature;
+        parseNext();
+        return returnFeature;
     }
 
     @Override
     public void close() {
         try {
             parser.close();
-            parsedFeature = null;
         } catch (IOException e) {
-            LOGGER.log(Level.FINER, e.getMessage(), e);
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
         }
     }
 }

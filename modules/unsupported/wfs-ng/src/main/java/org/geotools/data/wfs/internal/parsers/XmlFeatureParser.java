@@ -176,10 +176,10 @@ public abstract class XmlFeatureParser<FT extends FeatureType, F extends Feature
     protected String seekFeature() throws IOException, XMLStreamException {
         int tagType;
 
-        while (true) {
+        while (parser != null) {
             tagType = parser.next();
             if (tagType == END_DOCUMENT) {
-                close();
+                // close();
                 return null;
             }
 
@@ -204,5 +204,6 @@ public abstract class XmlFeatureParser<FT extends FeatureType, F extends Feature
                 }
             }
         }
+        return null;
     }
 }

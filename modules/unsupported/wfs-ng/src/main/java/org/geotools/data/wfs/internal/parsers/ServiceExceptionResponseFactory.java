@@ -27,8 +27,8 @@ import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 
 /**
- * Factory that are used if content-type is set to application/vnd.ogc.se_xml. The ServiceException will be parsed and
- * thrown by {@link Response}.
+ * Factory that are used if content-type is set to application/vnd.ogc.se_xml. The ServiceException
+ * will be parsed and thrown by {@link Response}.
  */
 public class ServiceExceptionResponseFactory implements WFSResponseFactory {
 
@@ -39,7 +39,8 @@ public class ServiceExceptionResponseFactory implements WFSResponseFactory {
 
     @Override
     public boolean canProcess(WFSRequest originatingRequest, String contentType) {
-        return contentType != null && contentType.toLowerCase().startsWith("application/vnd.ogc.se_xml");
+        return contentType != null
+                && contentType.toLowerCase().startsWith("application/vnd.ogc.se_xml");
     }
 
     @Override
@@ -54,7 +55,8 @@ public class ServiceExceptionResponseFactory implements WFSResponseFactory {
 
     /** */
     @Override
-    public WFSResponse createResponse(WFSRequest request, HTTPResponse response) throws ServiceException, IOException {
+    public WFSResponse createResponse(WFSRequest request, HTTPResponse response)
+            throws ServiceException, IOException {
         return new WFSResponse(request, response);
     }
 }

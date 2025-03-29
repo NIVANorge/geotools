@@ -52,13 +52,19 @@ public class WFSExtensions {
             final WFSRequest originatingRequest, final String contentType) {
 
         return getServiceProviders()
-                .filter(factory -> factory.isAvailable() && factory.canProcess(originatingRequest, contentType))
+                .filter(
+                        factory ->
+                                factory.isAvailable()
+                                        && factory.canProcess(originatingRequest, contentType))
                 .findFirst()
-                .orElseThrow(() -> new FactoryNotFoundException("Can't find a response parser factory for "
-                        + originatingRequest.getOperation()
-                        + "/'"
-                        + contentType
-                        + "'"));
+                .orElseThrow(
+                        () ->
+                                new FactoryNotFoundException(
+                                        "Can't find a response parser factory for "
+                                                + originatingRequest.getOperation()
+                                                + "/'"
+                                                + contentType
+                                                + "'"));
     }
 
     /**

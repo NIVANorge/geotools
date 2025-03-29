@@ -63,7 +63,8 @@ public abstract class AbstractWFSResponseFactory implements WFSResponseFactory {
      * @see ExceptionReportParser
      */
     @Override
-    public WFSResponse createResponse(WFSRequest request, HTTPResponse response) throws IOException, ServiceException {
+    public WFSResponse createResponse(WFSRequest request, HTTPResponse response)
+            throws IOException, ServiceException {
 
         // We can't rely on the server returning the correct output format. Some, for example
         // CubeWerx, upon a successful GetFeature request, set the response's content-type

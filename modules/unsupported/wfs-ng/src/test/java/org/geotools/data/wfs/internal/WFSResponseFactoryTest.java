@@ -36,21 +36,25 @@ public class WFSResponseFactoryTest {
     @Test
     public void checkWFSExtensionsReturnServiceExceptionFactory() throws Exception {
         GetFeatureRequest request = createRequest();
-        WFSResponseFactory responseFactory = WFSExtensions.findResponseFactory(request, CONTENT_TYPE);
+        WFSResponseFactory responseFactory =
+                WFSExtensions.findResponseFactory(request, CONTENT_TYPE);
         assertEquals(responseFactory.getClass(), ServiceExceptionResponseFactory.class);
     }
 
     @Test
     public void checkServiceExceptionIsThrown() throws Exception {
         GetFeatureRequest request = createRequest();
-        String body = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
-                + "<ServiceExceptionReport>\n"
-                + "  <ServiceException code=\"60\">error occured</ServiceException>\n"
-                + "</ServiceExceptionReport>";
+        String body =
+                "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
+                        + "<ServiceExceptionReport>\n"
+                        + "  <ServiceException code=\"60\">error occured</ServiceException>\n"
+                        + "</ServiceExceptionReport>";
         TestHttpResponse response = new TestHttpResponse(CONTENT_TYPE, "UTF-8", body);
         WFSResponseFactory responseFactory = new ServiceExceptionResponseFactory();
         ServiceException thrown =
-                assertThrows(ServiceException.class, () -> responseFactory.createResponse(request, response));
+                assertThrows(
+                        ServiceException.class,
+                        () -> responseFactory.createResponse(request, response));
         assertEquals("error occured", thrown.getMessage());
         assertEquals("60", thrown.getCode());
     }

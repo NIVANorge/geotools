@@ -52,7 +52,8 @@ public interface WFSResponseFactory {
      * @param response the handle to the response contents the WFS sent
      * @return a {@link WFSResponseParser} that can deal with the given WFS response
      */
-    public WFSResponse createResponse(WFSRequest request, HTTPResponse response) throws ServiceException, IOException;
+    public WFSResponse createResponse(WFSRequest request, HTTPResponse response)
+            throws ServiceException, IOException;
 
     public boolean canProcess(WFSOperationType operation);
 

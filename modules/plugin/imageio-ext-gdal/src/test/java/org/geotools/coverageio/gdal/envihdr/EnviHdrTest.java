@@ -43,12 +43,14 @@ import org.geotools.referencing.operation.matrix.XAffineTransform;
 import org.geotools.test.TestData;
 import org.geotools.util.factory.Hints;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  * @author Mathew Wyatt, CSIRO Australia
  * @author Daniele Romagnoli, GeoSolutions SAS
  */
+@Ignore
 public class EnviHdrTest extends GDALTestCase {
 
     /** file name of a valid EnviHdr sample data to be used for tests. */

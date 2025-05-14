@@ -84,7 +84,9 @@ public class XSIntBinding implements SimpleBinding {
     @Override
     public Object parse(InstanceComponent instance, Object value) throws Exception {
         String text = (String) value;
-
+        if (text.length() == 0) {
+            return null;
+        }
         if (text.charAt(0) == '+') {
             text = text.substring(1);
         }

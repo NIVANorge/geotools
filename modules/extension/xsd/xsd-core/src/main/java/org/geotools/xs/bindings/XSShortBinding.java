@@ -86,6 +86,9 @@ public class XSShortBinding implements SimpleBinding {
     @Override
     public Object parse(InstanceComponent instance, Object value) throws Exception {
         String text = instance.getText();
+        if (text.length() == 0) {
+            return null;
+        }
 
         if (text.charAt(0) == '+') {
             text = text.substring(1);

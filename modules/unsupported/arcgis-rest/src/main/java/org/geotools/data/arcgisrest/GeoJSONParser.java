@@ -418,7 +418,7 @@ public class GeoJSONParser implements SimpleFeatureIterator {
                 this.checkPropertyName(FEATURE_GEOMETRY_COORDINATES);
                 coords = this.parsePointCoordinates();
                 this.reader.endObject();
-                return (Geometry) builder.point(coords[0], coords[1]);
+                return coords.length == 2 ? (Geometry) builder.point(coords[0], coords[1]) : builder.point();
 
             case GEOMETRY_MULTIPOINT:
                 this.checkPropertyName(FEATURE_GEOMETRY_COORDINATES);

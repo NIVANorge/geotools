@@ -158,9 +158,11 @@ import org.geotools.renderer.style.StyleAttributeExtractor;
 import org.geotools.styling.RuleImpl;
 import org.geotools.styling.visitor.DpiRescaleStyleVisitor;
 import org.geotools.styling.visitor.DuplicatingStyleVisitor;
+import org.geotools.styling.visitor.FeatureStyleScaleStyleVisitor;
 import org.geotools.styling.visitor.MapRenderingSelectorStyleVisitor;
 import org.geotools.styling.visitor.RenderingSelectorStyleVisitor;
 import org.geotools.styling.visitor.UomRescaleStyleVisitor;
+import org.geotools.util.Converters;
 import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
@@ -1868,13 +1870,9 @@ public class StreamingRenderer implements GTRenderer {
 
         LiteFeatureTypeStyle lfts;
         boolean foundComposite = false;
-
-        // check if any <VendorOption name="renderingMap">false</VendorOption>
-        // is present in the style removing style's elements not meant to be applied
-        // to the data
-        RenderingSelectorStyleVisitor selectorStyleVisitor = new MapRenderingSelectorStyleVisitor();
-        layer.getStyle().accept(selectorStyleVisitor);
-        Style style = (Style) selectorStyleVisitor.getCopy();
+        // apply the rendering map selector {@MapRenderingSelectorStyleVisitor} and scale visitors
+        // {@FeatureStyleScaleStyleVisitor} to the style
+        Style style = applyStyleVisitors(layer);
 
         FeatureType schema = layer.getFeatureSource().getSchema();
         for (FeatureTypeStyle fts : style.featureTypeStyles()) {
@@ -1944,6 +1942,30 @@ public class StreamingRenderer implements GTRenderer {
         }
 
         return result;
+    }
+
+    /**
+     * Applies the style visitors to the layer style, returning a new style with the modifications applied.
+     *
+     * <p>This method is used to apply the rendering map selector {@MapRenderingSelectorStyleVisitor} and scale visitors
+     * {@FeatureStyleScaleStyleVisitor} to the style.
+     *
+     * @param layer The layer whose style is to be modified.
+     * @return A new Style object with the modifications applied.
+     */
+    private static Style applyStyleVisitors(Layer layer) {
+        // check if any <VendorOption name="renderingMap">false</VendorOption>
+        // is present in the style removing style's elements not meant to be applied
+        // to the data
+        RenderingSelectorStyleVisitor selectorStyleVisitor = new MapRenderingSelectorStyleVisitor();
+        layer.getStyle().accept(selectorStyleVisitor);
+        Style style = (Style) selectorStyleVisitor.getCopy();
+        // Set the max and min scale denominators from the parent feature style to the children rules
+        // if they are set on the vendor options.
+        FeatureStyleScaleStyleVisitor scaleStyleVisitor = new FeatureStyleScaleStyleVisitor();
+        style.accept(scaleStyleVisitor);
+        style = (Style) scaleStyleVisitor.getCopy();
+        return style;
     }
 
     /**
@@ -2211,10 +2233,14 @@ public class StreamingRenderer implements GTRenderer {
             } else if (result instanceof GridCoverage2DReader) {
                 features = FeatureUtilities.wrapGridCoverageReader((GridCoverage2DReader) result, null);
             } else {
-                throw new IllegalArgumentException("Don't know how to handle the results of the transformation, "
-                        + "the supported result types are FeatureCollection, GridCoverage2D "
-                        + "and GridCoverage2DReader, but we got: "
-                        + result.getClass());
+                // last attempt to convert the result to a FeatureCollection
+                features = Converters.convert(result, FeatureCollection.class);
+                if (features == null) {
+                    throw new IllegalArgumentException("Don't know how to handle the results of the transformation, "
+                            + "the supported result types are FeatureCollection, GridCoverage2D "
+                            + "and GridCoverage2DReader, but we got: "
+                            + result.getClass());
+                }
             }
         } else {
             Query mixed = DataUtilities.mixQueries(definitionQuery, styleQuery, null);
@@ -3005,8 +3031,20 @@ public class StreamingRenderer implements GTRenderer {
         } else if (geometry == null) {
             return getAttributeCRS(null, schema);
         } else {
-            StyleAttributeExtractor attExtractor = new StyleAttributeExtractor();
+            StyleAttributeExtractor attExtractor;
+            if (schema instanceof SimpleFeatureType) {
+                attExtractor = new StyleAttributeExtractor((SimpleFeatureType) schema);
+            } else {
+                attExtractor = new StyleAttributeExtractor();
+            }
             geometry.accept(attExtractor, null);
+            if (attExtractor.getDefaultGeometryUsed()) {
+                // if the default geometry is used, we can just return the CRS of the default geometry
+                GeometryDescriptor geomDesc = schema.getGeometryDescriptor();
+                if (geomDesc != null) {
+                    return geomDesc.getType().getCoordinateReferenceSystem();
+                }
+            }
             for (PropertyName name : attExtractor.getAttributes()) {
                 if (name.evaluate(schema) instanceof GeometryDescriptor) {
                     return getAttributeCRS(name, schema);

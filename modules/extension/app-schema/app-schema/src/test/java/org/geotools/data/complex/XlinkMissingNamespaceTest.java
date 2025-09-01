@@ -22,10 +22,10 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.net.URL;
+import org.geotools.appschema.test.AppSchemaTestSupport;
 import org.geotools.data.complex.config.AppSchemaDataAccessConfigurator;
 import org.geotools.data.complex.config.AppSchemaDataAccessDTO;
 import org.geotools.data.complex.config.XMLConfigDigester;
-import org.geotools.test.AppSchemaTestSupport;
 import org.junit.Test;
 
 /**

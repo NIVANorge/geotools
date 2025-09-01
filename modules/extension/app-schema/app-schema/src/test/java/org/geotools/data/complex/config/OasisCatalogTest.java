@@ -23,7 +23,7 @@ import static org.junit.Assert.assertNotNull;
 import java.net.URL;
 import org.apache.xml.resolver.Catalog;
 import org.apache.xml.resolver.tools.ResolvingXMLReader;
-import org.geotools.test.AppSchemaTestSupport;
+import org.geotools.appschema.test.AppSchemaTestSupport;
 import org.geotools.test.TestData;
 import org.junit.Before;
 import org.junit.Test;

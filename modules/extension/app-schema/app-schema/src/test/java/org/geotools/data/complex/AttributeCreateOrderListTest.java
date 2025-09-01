@@ -27,7 +27,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import org.geotools.test.AppSchemaTestSupport;
+import org.geotools.appschema.test.AppSchemaTestSupport;
 import org.junit.Test;
 
 /** @author Russell Petty (GeoScience Victoria) */

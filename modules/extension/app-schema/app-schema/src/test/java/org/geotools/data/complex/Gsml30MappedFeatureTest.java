@@ -30,13 +30,13 @@ import org.geotools.api.feature.ComplexAttribute;
 import org.geotools.api.feature.Feature;
 import org.geotools.api.feature.type.FeatureType;
 import org.geotools.api.feature.type.Name;
+import org.geotools.appschema.test.AppSchemaTestSupport;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.feature.NameImpl;
 import org.geotools.gml3.v3_2.GML;
 import org.geotools.gml3.v3_2.gco.GCO;
 import org.geotools.gml3.v3_2.gmd.GMD;
-import org.geotools.test.AppSchemaTestSupport;
 import org.junit.Assert;
 import org.junit.Test;
 

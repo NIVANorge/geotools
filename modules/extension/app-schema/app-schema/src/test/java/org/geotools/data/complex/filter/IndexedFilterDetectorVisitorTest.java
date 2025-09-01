@@ -22,9 +22,9 @@ import java.util.Arrays;
 import java.util.List;
 import org.geotools.api.filter.Filter;
 import org.geotools.api.filter.FilterFactory;
+import org.geotools.appschema.test.AppSchemaTestSupport;
 import org.geotools.data.complex.TestFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
-import org.geotools.test.AppSchemaTestSupport;
 import org.junit.Test;
 
 /**

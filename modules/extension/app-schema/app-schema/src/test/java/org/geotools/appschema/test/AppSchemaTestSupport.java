@@ -15,7 +15,7 @@
  *    Lesser General Public License for more details.
  */
 
-package org.geotools.test;
+package org.geotools.appschema.test;
 
 import org.geotools.appschema.resolver.xml.AppSchemaXSDRegistry;
 import org.geotools.data.complex.AppSchemaDataAccessRegistry;

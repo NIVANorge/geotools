@@ -22,8 +22,8 @@ import static org.junit.Assert.assertNotNull;
 
 import java.net.URL;
 import java.util.Set;
+import org.geotools.appschema.test.AppSchemaTestSupport;
 import org.geotools.data.complex.FeatureTypeMapping;
-import org.geotools.test.AppSchemaTestSupport;
 import org.junit.Test;
 
 /**

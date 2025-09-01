@@ -3,8 +3,8 @@ package org.geotools.data.complex.config;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import org.geotools.appschema.test.AppSchemaTestSupport;
 import org.geotools.data.complex.AppSchemaDataAccessRegistry;
-import org.geotools.test.AppSchemaTestSupport;
 import org.junit.Test;
 
 /**

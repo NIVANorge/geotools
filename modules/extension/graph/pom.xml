@@ -13,7 +13,7 @@
   <parent>
     <groupId>org.geotools</groupId>
     <artifactId>extension</artifactId>
-    <version>32.3-NIVA</version>
+    <version>32.4-NIVA</version>
   </parent>
 
   <!-- =========================================================== -->

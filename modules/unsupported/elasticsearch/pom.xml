@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.geotools</groupId>
     <artifactId>unsupported</artifactId>
-    <version>32.3-NIVA</version>
+    <version>32.4-NIVA</version>
   </parent>
   <groupId>org.geotools</groupId>
   <artifactId>gt-elasticsearch</artifactId>

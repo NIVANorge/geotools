@@ -16,6 +16,7 @@
  */
 package org.geotools.xsd;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ import org.xml.sax.SAXException;
  *
  * @author Justin Deoliveira, OpenGeo
  */
-public class PullParser {
+public class PullParser implements Closeable {
 
     PullParserHandler handler;
     XMLStreamReader pp;
@@ -127,6 +128,17 @@ public class PullParser {
         }
 
         return null;
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (this.pp != null) {
+            try {
+                this.pp.close();
+            } catch (XMLStreamException e) {
+                throw new IOException("Error closing XML stream", e);
+            }
+        }
     }
 
     QName qName(String prefix, String name, XMLStreamReader pp2) {

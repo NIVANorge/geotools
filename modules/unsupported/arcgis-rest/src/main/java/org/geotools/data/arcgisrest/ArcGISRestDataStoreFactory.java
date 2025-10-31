@@ -85,8 +85,8 @@ public class ArcGISRestDataStoreFactory implements DataStoreFactorySpi {
     @Override
     public DataStore createDataStore(Map<String, ?> params) throws IOException {
         return new ArcGISRestDataStore(
-                (String) params.get(NAMESPACE_PARAM.key),
-                (String) params.get(URL_PARAM.key),
+                params.get(NAMESPACE_PARAM.key).toString(),
+                params.get(URL_PARAM.key).toString(),
                 Boolean.parseBoolean(params.get(ISOPENDATA_PARAM.key).toString()),
                 (String) params.get(USER_PARAM.key),
                 (String) params.get(PASSWORD_PARAM.key));
@@ -109,10 +109,13 @@ public class ArcGISRestDataStoreFactory implements DataStoreFactorySpi {
 
     @Override
     public boolean canProcess(Map<String, ?> params) {
-
+        if (params.get(ArcGISRestDataStoreFactory.NAMESPACE_PARAM.key) == null
+                || params.get(ArcGISRestDataStoreFactory.URL_PARAM.key) == null) {
+            return false;
+        }
         try {
-            new URL((String) params.get(ArcGISRestDataStoreFactory.NAMESPACE_PARAM.key));
-            new URL((String) params.get(ArcGISRestDataStoreFactory.URL_PARAM.key));
+            new URL(params.get(ArcGISRestDataStoreFactory.NAMESPACE_PARAM.key).toString());
+            new URL(params.get(ArcGISRestDataStoreFactory.URL_PARAM.key).toString());
         } catch (MalformedURLException e) {
             return false;
         }

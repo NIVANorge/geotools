@@ -1329,7 +1329,7 @@ public abstract class AbstractGridCoverage2DReader implements GridCoverage2DRead
                 GDALMetadata gdalMetadata = GDALMetadataParser.parse(xml);
                 return toPamDataset(gdalMetadata);
             } catch (Exception e) {
-                LOGGER.log(Level.INFO, "GDAL_METADATA tag contents could not be parsed", e);
+                LOGGER.log(Level.FINE, "GDAL_METADATA tag contents could not be parsed", e);
             }
         }
         return null;

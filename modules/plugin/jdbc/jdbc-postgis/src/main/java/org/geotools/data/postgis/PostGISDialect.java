@@ -1133,7 +1133,14 @@ public class PostGISDialect extends BasicSQLDialect {
                                 + geomType
                                 + ", "
                                 + srid
-                                + ");";
+                                + ")"
+                                + " USING "
+                                + escapeName(gd.getLocalName())
+                                + "::geometry("
+                                + geomType
+                                + ","
+                                + srid
+                                + ")";
 
                         LOGGER.fine(sql);
                         st.execute(sql);

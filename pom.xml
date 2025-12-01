@@ -15,7 +15,7 @@
   <!-- =========================================================== -->
   <groupId>org.geotools</groupId>
   <artifactId>geotools</artifactId>
-  <version>32.6-NIVA</version>
+  <version>32.7-NIVA</version>
   <packaging>pom</packaging>
   <name>GeoTools</name>
 

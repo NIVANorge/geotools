@@ -1,0 +1,31 @@
+name: Deploy GeoTools on NIVAnorge
+
+on:
+  push:
+    tags:
+      - '*-NIVA'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5.2.0
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Deploy Geotools
+        run: |
+          cd geotools
+          mvn -s $GITHUB_WORKSPACE/.github/workflows/maven-settings.xml deploy -P process,arcgis-rest -DskipTests
+        env:
+          USER_NAME: ${{ secrets.MVN_USER }}
+          ACCESS_TOKEN: ${{ secrets.MVN_TOKEN }}

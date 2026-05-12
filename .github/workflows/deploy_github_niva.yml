@@ -25,7 +25,8 @@ jobs:
       - name: Deploy Geotools
         run: |
           cd geotools
-          mvn -s $GITHUB_WORKSPACE/.github/workflows/maven-settings.xml deploy -P process,arcgis-rest -DskipTests
+          mvn -s $GITHUB_WORKSPACE/.github/workflows/maven-settings.xml generate-sources \
+                        javadoc:jar deploy -P process,arcgis-rest -DskipTests
         env:
           USER_NAME: ${{ secrets.MVN_USER }}
           ACCESS_TOKEN: ${{ secrets.MVN_TOKEN }}

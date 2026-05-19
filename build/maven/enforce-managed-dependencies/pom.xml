@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.geotools.maven</groupId>
     <artifactId>maven</artifactId>
-    <version>35.0-NIVA</version>
+    <version>35.1-NIVA</version>
   </parent>
 
   <artifactId>gt-enforce-managed-dependencies</artifactId>

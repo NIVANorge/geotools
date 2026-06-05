@@ -13,7 +13,7 @@
   <parent>
     <groupId>org.geotools.maven</groupId>
     <artifactId>maven</artifactId>
-    <version>35.2-NIVA</version>
+    <version>35.3-NIVA</version>
   </parent>
 
   <!-- =========================================================== -->

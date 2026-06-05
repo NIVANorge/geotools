@@ -33,7 +33,6 @@ import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import net.opengis.fes20.FilterCapabilitiesType;
@@ -57,7 +56,9 @@ import org.geotools.api.filter.capability.FilterCapabilities;
 import org.geotools.api.filter.capability.Operator;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
+import org.geotools.util.NullEntityResolver;
 import org.geotools.util.URLs;
+import org.geotools.xml.XMLUtils;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.Parser;
 import org.geotools.xsd.Schemas;
@@ -89,7 +90,7 @@ public class WFS_2_0_0_ParsingTest {
 
         configuration = new org.geotools.wfs.v2_0.WFSCapabilitiesConfiguration();
 
-        Parser parser = new Parser(configuration);
+        Parser parser = new Parser(configuration, NullEntityResolver.INSTANCE);
         Object parsed = parser.parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
         Assert.assertNotNull(parsed);
         Assert.assertTrue(parsed.getClass().getName(), parsed instanceof WFSCapabilitiesType);
@@ -103,7 +104,7 @@ public class WFS_2_0_0_ParsingTest {
     public void testParseGetCapabilities() throws Exception {
         configuration = new org.geotools.wfs.v2_0.WFSCapabilitiesConfiguration();
 
-        Parser parser = new Parser(configuration);
+        Parser parser = new Parser(configuration, NullEntityResolver.INSTANCE);
         Object parsed = parser.parse(getClass().getResourceAsStream("geoserver-GetCapabilities_2_0_0.xml"));
 
         Assert.assertNotNull(parsed);
@@ -124,7 +125,7 @@ public class WFS_2_0_0_ParsingTest {
     public void testParseGetCapabilitiesFMI() throws Exception {
         configuration = new org.geotools.wfs.v2_0.WFSCapabilitiesConfiguration();
 
-        Parser parser = new Parser(configuration);
+        Parser parser = new Parser(configuration, NullEntityResolver.INSTANCE);
         Object parsed = parser.parse(getClass().getResourceAsStream("fmi-GetCapabilities_2_0_0.xml"));
 
         Assert.assertNotNull(parsed);
@@ -142,7 +143,7 @@ public class WFS_2_0_0_ParsingTest {
     public void testParseGetCapabilitiesCuzk() throws Exception {
         configuration = new org.geotools.wfs.v2_0.WFSCapabilitiesConfiguration();
 
-        Parser parser = new Parser(configuration);
+        Parser parser = new Parser(configuration, NullEntityResolver.INSTANCE);
         Object parsed = parser.parse(getClass().getResourceAsStream("cuzk-GetCapabilities_2_0_0.xml"));
 
         Assert.assertNotNull(parsed);
@@ -322,10 +323,10 @@ public class WFS_2_0_0_ParsingTest {
 
         try (InputStream in = getClass().getResourceAsStream("geoserver-GetFeature.xml")) {
 
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilderFactory dbf = XMLUtils.newDocumentBuilderFactory();
             dbf.setNamespaceAware(true);
 
-            DocumentBuilder db = dbf.newDocumentBuilder();
+            DocumentBuilder db = XMLUtils.newDocumentBuilder(dbf);
             Document doc = db.parse(in);
 
             // http://cite.opengeospatial.org/gmlsf
@@ -342,13 +343,13 @@ public class WFS_2_0_0_ParsingTest {
             tmp = File.createTempFile("geoserver-GetFeature", "xml");
             tmp.deleteOnExit();
 
-            Transformer tx = TransformerFactory.newInstance().newTransformer();
+            Transformer tx = XMLUtils.newTransformer();
             tx.transform(new DOMSource(doc), new StreamResult(tmp));
         }
 
         try (InputStream in = new FileInputStream(tmp)) {
 
-            Parser parser = new Parser(configuration);
+            Parser parser = new Parser(configuration, NullEntityResolver.INSTANCE);
             FeatureCollectionType fc = (FeatureCollectionType) parser.parse(in);
             Assert.assertNotNull(fc);
 

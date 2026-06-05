@@ -33,6 +33,8 @@ import org.geotools.api.filter.expression.Literal;
 import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.api.filter.spatial.DWithin;
 import org.geotools.factory.CommonFactoryFinder;
+import org.geotools.util.NullEntityResolver;
+import org.geotools.xml.XMLUtils;
 import org.geotools.xsd.Encoder;
 import org.geotools.xsd.Parser;
 import org.junit.Assert;
@@ -56,10 +58,10 @@ public class OGCFilterTest {
             output.flush();
         }
 
-        DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilderFactory docFactory = XMLUtils.newDocumentBuilderFactory();
         docFactory.setNamespaceAware(true);
 
-        Document doc = docFactory.newDocumentBuilder().parse(file);
+        Document doc = docFactory.newDocumentBuilder().parse(file); // NOPMD: AvoidDocumentBuilder
 
         Assert.assertEquals("ogc:PropertyIsEqualTo", doc.getDocumentElement().getNodeName());
         Assert.assertEquals(1, doc.getElementsByTagName("ogc:PropertyName").getLength());
@@ -76,6 +78,7 @@ public class OGCFilterTest {
     @Test
     public void testParse() throws Exception {
         Parser parser = new Parser(new OGCConfiguration());
+        parser.setEntityResolver(NullEntityResolver.INSTANCE);
         try (InputStream in = getClass().getResourceAsStream("test1.xml")) {
 
             if (in == null) {
@@ -117,6 +120,7 @@ public class OGCFilterTest {
         OGCConfiguration configuration = new OGCConfiguration();
 
         Parser parser = new Parser(configuration);
+        parser.setEntityResolver(NullEntityResolver.INSTANCE);
         DWithin filter = (DWithin) parser.parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
         Assert.assertNotNull(filter);
 
@@ -158,6 +162,7 @@ public class OGCFilterTest {
         OGCConfiguration configuration = new OGCConfiguration();
 
         Parser parser = new Parser(configuration);
+        parser.setEntityResolver(NullEntityResolver.INSTANCE);
         DWithin filter = (DWithin) parser.parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
         Assert.assertNotNull(filter);
 
@@ -182,6 +187,7 @@ public class OGCFilterTest {
                 + "</ogc:Filter>";
 
         Parser p = new Parser(new OGCConfiguration());
+        p.setEntityResolver(NullEntityResolver.INSTANCE);
         p.validate(new StringReader(xml));
 
         Assert.assertTrue(p.getValidationErrors().isEmpty());

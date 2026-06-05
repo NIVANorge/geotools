@@ -29,11 +29,14 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
+import org.geotools.xml.XMLUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
 
 /**
  * @author Christian Mueller
@@ -65,8 +68,14 @@ public class GeneralizationInfosProviderImpl implements GeneralizationInfosProvi
     protected static Validator VALIDATOR;
 
     static {
-        SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-
+        SchemaFactory factory = XMLUtils.newSchemaFactory(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        // no need for external xsd as we are parsing local geninfos_1.0.xsd resource
+        try {
+            factory.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            factory.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+        } catch (SAXNotRecognizedException | SAXNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
         URL url = GeneralizationInfosProviderImpl.class.getResource("/geninfos_1.0.xsd");
         Schema schema = null;
         try {
@@ -76,6 +85,12 @@ public class GeneralizationInfosProviderImpl implements GeneralizationInfosProvi
             throw new RuntimeException(e);
         }
         VALIDATOR = schema.newValidator();
+        try {
+            VALIDATOR.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            VALIDATOR.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+        } catch (SAXNotRecognizedException | SAXNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -109,13 +124,13 @@ public class GeneralizationInfosProviderImpl implements GeneralizationInfosProvi
     protected GeneralizationInfos parseXML(URL url) throws IOException {
 
         Document doc = null;
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilderFactory factory = XMLUtils.newDocumentBuilderFactory();
         factory.setIgnoringComments(true);
         factory.setNamespaceAware(true);
         factory.setIgnoringElementContentWhitespace(true);
 
         try {
-            DocumentBuilder db = factory.newDocumentBuilder();
+            DocumentBuilder db = factory.newDocumentBuilder(); // NOPMD: AvoidDocumentBuilder
             doc = db.parse(url.openStream());
             VALIDATOR.validate(new DOMSource(doc));
         } catch (Exception e) {

@@ -31,13 +31,13 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import net.opengis.wfs.FeatureTypeType;
 import org.apache.commons.io.IOUtils;
 import org.geotools.data.wfs.internal.WFSOperationType;
 import org.geotools.data.wfs.internal.WFSRequest;
+import org.geotools.xml.XMLUtils;
 import org.geotools.xs.bindings.XSDoubleBinding;
 import org.geotools.xs.bindings.XSIntegerBinding;
 import org.geotools.xs.bindings.XSStringBinding;
@@ -98,7 +98,7 @@ public class MapServerWFSStrategy extends StrictWFS_1_x_Strategy {
                 String[] tokens = mapServerVersion.split("\\.");
                 if (tokens.length == 3 && versionCompare(mapServerVersion, "5.6.7") < 0) {
                     StringWriter writer = new StringWriter();
-                    IOUtils.copy(in, writer, "UTF-8");
+                    IOUtils.copy(in, writer, StandardCharsets.UTF_8);
                     String pc = writer.toString();
 
                     boolean reformatted = false;
@@ -107,9 +107,9 @@ public class MapServerWFSStrategy extends StrictWFS_1_x_Strategy {
                             && pc.contains("gml:X")
                             && pc.contains("gml:Y")) {
 
-                        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                        DocumentBuilderFactory factory = XMLUtils.newDocumentBuilderFactory();
                         factory.setNamespaceAware(true);
-                        DocumentBuilder builder = factory.newDocumentBuilder();
+                        DocumentBuilder builder = XMLUtils.newDocumentBuilder(factory);
                         Document doc = builder.parse(new ByteArrayInputStream(pc.getBytes(StandardCharsets.UTF_8)));
 
                         NodeList boxes = doc.getElementsByTagName("gml:Box");
@@ -154,8 +154,7 @@ public class MapServerWFSStrategy extends StrictWFS_1_x_Strategy {
                             DOMSource domSource = new DOMSource(doc);
                             StringWriter domsw = new StringWriter();
                             StreamResult result = new StreamResult(domsw);
-                            TransformerFactory tf = TransformerFactory.newInstance();
-                            Transformer transformer = tf.newTransformer();
+                            Transformer transformer = XMLUtils.newTransformer();
                             transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
                             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
                             transformer.transform(domSource, result);

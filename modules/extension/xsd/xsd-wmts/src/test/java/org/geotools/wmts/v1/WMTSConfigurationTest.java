@@ -44,10 +44,12 @@ import net.opengis.wmts.v_1.LayerType;
 import org.geotools.filter.v1_1.OGC;
 import org.geotools.gml2.GML;
 import org.geotools.test.xml.XmlTestSupport;
+import org.geotools.util.NullEntityResolver;
 import org.geotools.util.logging.Logging;
 import org.geotools.wmts.WMTS;
 import org.geotools.wmts.WMTSConfiguration;
 import org.geotools.xlink.XLINK;
+import org.geotools.xml.XMLUtils;
 import org.geotools.xsd.Encoder;
 import org.geotools.xsd.Parser;
 import org.geotools.xsd.ows.OWS;
@@ -74,7 +76,7 @@ public class WMTSConfigurationTest extends XmlTestSupport {
     @Test
     /** Test GEOT-6004 GetCapabilities fails for ows:Profile */
     public void testGEOT6004() throws IOException, SAXException, ParserConfigurationException {
-        Parser p = new Parser(new WMTSConfiguration());
+        Parser p = new Parser(new WMTSConfiguration(), NullEntityResolver.INSTANCE);
         // p.setValidating(false);
         Object parsed;
         try (InputStream is = getClass().getResourceAsStream("./wmtsGetCapabilities_6004.xml")) {
@@ -105,7 +107,7 @@ public class WMTSConfigurationTest extends XmlTestSupport {
     /** */
     private Map<String, LayerType> parseCaps(String capDoc)
             throws IOException, SAXException, ParserConfigurationException {
-        Parser p = new Parser(new WMTSConfiguration());
+        Parser p = new Parser(new WMTSConfiguration(), NullEntityResolver.INSTANCE);
         p.setValidating(false);
         Object parsed;
         try (InputStream is = getClass().getResourceAsStream(capDoc)) {
@@ -146,7 +148,7 @@ public class WMTSConfigurationTest extends XmlTestSupport {
     @Ignore
     @Test
     public void testValidate() throws IOException, SAXException, ParserConfigurationException {
-        Parser p = new Parser(new WMTSConfiguration());
+        Parser p = new Parser(new WMTSConfiguration(), NullEntityResolver.INSTANCE);
         p.setValidating(true);
         try (InputStream is = getClass().getResourceAsStream("./nasa.getcapa.xml")) {
             p.parse(is);
@@ -166,7 +168,7 @@ public class WMTSConfigurationTest extends XmlTestSupport {
     // been encoded correctly
     public void testEncode() throws Exception {
 
-        Parser myParser = new Parser(new WMTSConfiguration());
+        Parser myParser = new Parser(new WMTSConfiguration(), NullEntityResolver.INSTANCE);
 
         CapabilitiesType caps = (CapabilitiesType) myParser.parse(getClass().getResourceAsStream("nasa.getcapa.xml"));
 
@@ -473,14 +475,14 @@ public class WMTSConfigurationTest extends XmlTestSupport {
 
     /** Utility method to print out a dom. */
     protected void print(Document dom) throws Exception {
-        TransformerFactory txFactory = TransformerFactory.newInstance();
+        TransformerFactory txFactory = XMLUtils.newTransformerFactory();
         try {
             txFactory.setAttribute("{http://xml.apache.org/xalan}indent-number", Integer.valueOf(4));
         } catch (Exception e) {
             // some
         }
 
-        Transformer tx = txFactory.newTransformer();
+        Transformer tx = XMLUtils.newTransformer(txFactory);
         tx.setOutputProperty(OutputKeys.METHOD, "xml");
         tx.setOutputProperty(OutputKeys.INDENT, "yes");
 

@@ -33,7 +33,9 @@ import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.wfs.internal.parsers.EmfAppSchemaParser;
 import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
+import org.geotools.util.EntityResolver3;
 import org.geotools.util.URLs;
+import org.geotools.util.factory.GeoTools;
 import org.geotools.xsd.Configuration;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
@@ -91,11 +93,17 @@ public class DescribeFeatureTypeResponse extends WFSResponse {
     }
 
     private EntityResolver getTempFileEntityResolver(EntityResolver resolver, File tempSchema) {
-        if (resolver == null) return null;
-        if (resolver instanceof EntityResolver2 resolver2) return new TempEntityResolver2(resolver2, tempSchema);
+        if (resolver == null) {
+            resolver = GeoTools.getEntityResolver(null);
+        }
+
+        if (resolver instanceof EntityResolver2 resolver2) {
+            return new TempEntityResolver2(resolver2, tempSchema);
+        }
         return new TempEntityResolver(resolver, tempSchema);
     }
 
+    /** Wraps provided EntityResolver to handle tempSchemaURIs internally. */
     private static class TempEntityResolver implements EntityResolver {
         private final EntityResolver delegate;
         private Set<String> tempSchemaURIs;
@@ -152,14 +160,33 @@ public class DescribeFeatureTypeResponse extends WFSResponse {
         protected boolean isTempSchema(String systemId) {
             return tempSchemaURIs.contains(systemId);
         }
+
+        @Override
+        public String toString() {
+            return "TempEntityResolver{" + this.delegate + "}";
+        }
     }
 
-    private static class TempEntityResolver2 extends TempEntityResolver implements EntityResolver2 {
+    /** Wraps provided EntityResolver2 to handle tempSchemaURIs internally. */
+    private static class TempEntityResolver2 extends TempEntityResolver implements EntityResolver3 {
         EntityResolver2 delegate;
 
         public TempEntityResolver2(EntityResolver2 delegate, File tempSchema) {
             super(delegate, tempSchema);
             this.delegate = delegate;
+        }
+
+        @Override
+        public String getAccess() {
+            if (delegate instanceof EntityResolver3 entityResolver3) {
+                String access = entityResolver3.getAccess();
+                if (access.contains("file") || access.contains("all")) {
+                    return access;
+                } else {
+                    return access + ",file";
+                }
+            }
+            return "all";
         }
 
         @Override
@@ -171,8 +198,15 @@ public class DescribeFeatureTypeResponse extends WFSResponse {
         @Override
         public InputSource resolveEntity(String name, String publicId, String baseURI, String systemId)
                 throws SAXException, IOException {
-            if (isTempSchema(systemId)) return null;
+            if (isTempSchema(systemId)) {
+                return null; // handled internally
+            }
             return delegate.resolveEntity(name, publicId, baseURI, systemId);
+        }
+
+        @Override
+        public String toString() {
+            return "TempEntityResolver2{" + this.delegate + "}";
         }
     }
 }

@@ -16,6 +16,7 @@
  */
 package org.geotools.xsd;
 
+import static java.util.Collections.emptyList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -54,7 +55,6 @@ import org.geotools.xsd.impl.HTTPURIHandler;
 import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
@@ -65,15 +65,9 @@ public class SchemasTest {
     File tmp, sub;
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-    @BeforeClass
-    public static void setupResolver() {
-        // tests need to be able to resolve local entities
-        Hints.putSystemDefault(Hints.ENTITY_RESOLVER, NullEntityResolver.INSTANCE);
-    }
-
     @Before
     public void setUp() throws Exception {
-
+        Hints.putSystemDefault(Hints.ENTITY_RESOLVER, NullEntityResolver.INSTANCE);
         tmp = File.createTempFile("schemas", "xsd");
         tmp.delete();
         tmp.mkdir();
@@ -161,14 +155,14 @@ public class SchemasTest {
         tmp.delete();
 
         System.setProperty(Schemas.FORCE_SCHEMA_IMPORT, "false");
-
+        Hints.removeSystemDefault(Hints.ENTITY_RESOLVER);
         executorService.shutdown();
     }
 
     @Test
     public void testValidateImportsIncludes() throws Exception {
         String location = new File(tmp, "root.xsd").getAbsolutePath();
-        List errors = Schemas.validateImportsIncludes(location);
+        List errors = Schemas.validateImportsIncludes(location, emptyList(), emptyList(), null);
         assertEquals(2, errors.size());
 
         SchemaLocationResolver resolver1 = new SchemaLocationResolver(XS.getInstance()) {

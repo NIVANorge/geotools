@@ -19,18 +19,21 @@ package org.geotools.xsd;
 import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import org.geotools.util.NullEntityResolver;
+import org.geotools.xml.XMLUtils;
 import org.geotools.xs.XSConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
 import org.w3c.dom.Document;
 
 public class FacetTest {
+
     @Test
     public void testList() throws Exception {
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilderFactory dbf = XMLUtils.newDocumentBuilderFactory();
         dbf.setNamespaceAware(true);
 
-        DocumentBuilder db = dbf.newDocumentBuilder();
+        DocumentBuilder db = XMLUtils.newDocumentBuilder(dbf);
         Document doc = db.parse(getClass().getResourceAsStream("list.xml"));
 
         String schemaLocation = "http://geotools.org/test "
@@ -39,7 +42,7 @@ public class FacetTest {
         doc.getDocumentElement()
                 .setAttributeNS("http://www.w3.org/2001/XMLSchema-instance", "schemaLocation", schemaLocation);
 
-        DOMParser parser = new DOMParser(new XSConfiguration(), doc);
+        DOMParser parser = new DOMParser(new XSConfiguration(), doc, NullEntityResolver.INSTANCE);
         Object o = parser.parse();
         Assert.assertTrue(o instanceof List);
 
@@ -53,10 +56,10 @@ public class FacetTest {
 
     @Test
     public void testWhitespace() throws Exception {
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilderFactory dbf = XMLUtils.newDocumentBuilderFactory();
         dbf.setNamespaceAware(true);
 
-        DocumentBuilder db = dbf.newDocumentBuilder();
+        DocumentBuilder db = XMLUtils.newDocumentBuilder(dbf);
         Document doc = db.parse(getClass().getResourceAsStream("whitespace.xml"));
 
         String schemaLocation = "http://geotools.org/test "
@@ -65,7 +68,7 @@ public class FacetTest {
         doc.getDocumentElement()
                 .setAttributeNS("http://www.w3.org/2001/XMLSchema-instance", "schemaLocation", schemaLocation);
 
-        DOMParser parser = new DOMParser(new XSConfiguration(), doc);
+        DOMParser parser = new DOMParser(new XSConfiguration(), doc, NullEntityResolver.INSTANCE);
         String s = (String) parser.parse();
 
         Assert.assertEquals("this is a normal string with some whitespace and some new lines", s);
@@ -73,10 +76,10 @@ public class FacetTest {
 
     @Test
     public void testCDATAWhitespace() throws Exception {
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilderFactory dbf = XMLUtils.newDocumentBuilderFactory();
         dbf.setNamespaceAware(true);
 
-        DocumentBuilder db = dbf.newDocumentBuilder();
+        DocumentBuilder db = XMLUtils.newDocumentBuilder(dbf);
         Document doc = db.parse(getClass().getResourceAsStream("whitespace-cdata.xml"));
 
         String schemaLocation = "http://geotools.org/test "
@@ -85,7 +88,7 @@ public class FacetTest {
         doc.getDocumentElement()
                 .setAttributeNS("http://www.w3.org/2001/XMLSchema-instance", "schemaLocation", schemaLocation);
 
-        DOMParser parser = new DOMParser(new XSConfiguration(), doc);
+        DOMParser parser = new DOMParser(new XSConfiguration(), doc, NullEntityResolver.INSTANCE);
         String s = (String) parser.parse();
 
         Assert.assertEquals(" this is a \n normal string \n with some whitespace and \n some new lines", s);

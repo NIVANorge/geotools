@@ -27,6 +27,8 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import org.eclipse.emf.ecore.resource.URIHandler;
+import org.geotools.util.factory.GeoTools;
+import org.geotools.xml.XMLUtils;
 import org.geotools.xsd.impl.ElementHandler;
 import org.geotools.xsd.impl.NodeImpl;
 import org.geotools.xsd.impl.ParserHandler;
@@ -61,6 +63,7 @@ public class PullParser implements Closeable {
 
     public PullParser(Configuration config, InputStream input, PullParserHandler handler) {
         this.handler = handler;
+        this.handler.setEntityResolver(GeoTools.getEntityResolver(null));
         pp = createPullParser(input);
     }
 
@@ -150,12 +153,10 @@ public class PullParser implements Closeable {
     }
 
     XMLStreamReader createPullParser(InputStream input) {
-        XMLInputFactory factory = XMLInputFactory.newInstance();
+        XMLInputFactory factory = XMLUtils.newXMLInputFactory();
         factory.setProperty(XMLInputFactory.IS_NAMESPACE_AWARE, true);
         factory.setProperty(XMLInputFactory.IS_VALIDATING, false);
-        // disable DTDs
         factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
-        // disable external entities
         factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
         try {
             return factory.createXMLStreamReader(input);

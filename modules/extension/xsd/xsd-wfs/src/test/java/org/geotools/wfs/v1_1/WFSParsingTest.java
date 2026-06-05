@@ -33,6 +33,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import javax.xml.namespace.QName;
@@ -40,7 +41,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import net.opengis.ows10.DCPType;
@@ -64,8 +64,10 @@ import org.geotools.api.filter.capability.FilterCapabilities;
 import org.geotools.api.filter.capability.SpatialOperators;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
+import org.geotools.util.NullEntityResolver;
 import org.geotools.util.URLs;
 import org.geotools.wfs.WFSConfiguration;
+import org.geotools.xml.XMLUtils;
 import org.geotools.xsd.Parser;
 import org.geotools.xsd.Schemas;
 import org.geotools.xsd.StreamingParser;
@@ -87,7 +89,7 @@ public class WFSParsingTest {
 
     @Test
     public void testParseGetCapabilities() throws Exception {
-        Parser parser = new Parser(configuration);
+        Parser parser = new Parser(configuration, NullEntityResolver.INSTANCE);
         WFSCapabilitiesType caps =
                 (WFSCapabilitiesType) parser.parse(getClass().getResourceAsStream("geoserver-GetCapabilities.xml"));
 
@@ -105,7 +107,7 @@ public class WFSParsingTest {
     @Test
     @Ignore
     public void testParseGetCapabilitiesDeegree() throws Exception {
-        Parser parser = new Parser(configuration);
+        Parser parser = new Parser(configuration, NullEntityResolver.INSTANCE);
         WFSCapabilitiesType caps =
                 (WFSCapabilitiesType) parser.parse(getClass().getResourceAsStream("deegree-GetCapabilities.xml"));
 
@@ -244,7 +246,12 @@ public class WFSParsingTest {
     @Test
     public void testParseDescribeFeatureType() throws Exception {
         String loc = getClass().getResource("geoserver-DescribeFeatureType.xml").getFile();
-        XSDSchema schema = Schemas.parse(loc);
+        XSDSchema schema = Schemas.parse(
+                loc,
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                NullEntityResolver.INSTANCE);
 
         assertNotNull(schema);
         final String targetNs = "http://cite.opengeospatial.org/gmlsf";
@@ -270,10 +277,10 @@ public class WFSParsingTest {
 
         try (InputStream in = getClass().getResourceAsStream("geoserver-GetFeature.xml")) {
 
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilderFactory dbf = XMLUtils.newDocumentBuilderFactory();
             dbf.setNamespaceAware(true);
 
-            DocumentBuilder db = dbf.newDocumentBuilder();
+            DocumentBuilder db = XMLUtils.newDocumentBuilder(dbf);
             Document doc = db.parse(in);
 
             // http://cite.opengeospatial.org/gmlsf
@@ -290,13 +297,13 @@ public class WFSParsingTest {
             tmp = File.createTempFile("geoserver-GetFeature", "xml");
             tmp.deleteOnExit();
 
-            Transformer tx = TransformerFactory.newInstance().newTransformer();
+            Transformer tx = XMLUtils.newTransformer();
             tx.transform(new DOMSource(doc), new StreamResult(tmp));
         }
 
         try (InputStream in = new FileInputStream(tmp)) {
 
-            Parser parser = new Parser(configuration);
+            Parser parser = new Parser(configuration, NullEntityResolver.INSTANCE);
             FeatureCollectionType fc = (FeatureCollectionType) parser.parse(in);
             assertNotNull(fc);
 
@@ -363,7 +370,7 @@ public class WFSParsingTest {
 
     @Test
     public void testParseTransactionResponse() throws IOException, SAXException, ParserConfigurationException {
-        Parser parser = new Parser(configuration);
+        Parser parser = new Parser(configuration, NullEntityResolver.INSTANCE);
         Object parsed = parser.parse(getClass().getResourceAsStream("transactionResponse.xml"));
 
         assertNotNull(parsed);

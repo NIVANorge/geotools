@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.lang3.StringUtils;
 import org.geotools.api.filter.Filter;
@@ -104,9 +105,12 @@ import org.geotools.styling.ShadedReliefImpl;
 import org.geotools.styling.UomOgcMapping;
 import org.geotools.styling.UserLayerImpl;
 import org.geotools.util.Base64;
+import org.geotools.util.DefaultEntityResolver;
 import org.geotools.util.GrowableInternationalString;
+import org.geotools.util.NullEntityResolver;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.util.factory.GeoTools;
+import org.geotools.xml.XMLUtils;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -355,14 +359,41 @@ public class SLDParser {
         }
     }
 
+    /**
+     * Configured DocumentBuilder for parsing SLD documents, which requires namespace information.
+     *
+     * @param namespaceAware
+     * @return
+     * @throws ParserConfigurationException
+     */
     protected javax.xml.parsers.DocumentBuilder newDocumentBuilder(boolean namespaceAware)
             throws ParserConfigurationException {
-        javax.xml.parsers.DocumentBuilderFactory dbf = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        javax.xml.parsers.DocumentBuilderFactory dbf = XMLUtils.newDocumentBuilderFactory();
         dbf.setNamespaceAware(namespaceAware);
-        javax.xml.parsers.DocumentBuilder db = dbf.newDocumentBuilder();
 
         if (entityResolver != null) {
+            try {
+                if (entityResolver == DefaultEntityResolver.INSTANCE) {
+                    dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "http");
+                } else if (entityResolver == NullEntityResolver.INSTANCE) {
+                    dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "all");
+                } else {
+                    dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "file,http");
+                }
+            } catch (IllegalArgumentException notSupported) {
+                LOGGER.fine("Parser does not support ACCESS_EXTERNAL_DTD: " + notSupported.getMessage());
+            }
+            dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+
+            dbf.setFeature("http://xml.org/sax/features/external-general-entities", true);
+        }
+
+        javax.xml.parsers.DocumentBuilder db = XMLUtils.newDocumentBuilder(dbf);
+        if (entityResolver != null) {
             db.setEntityResolver(entityResolver);
+        } else {
+            db.setEntityResolver(GeoTools.getEntityResolver(null));
         }
 
         return db;

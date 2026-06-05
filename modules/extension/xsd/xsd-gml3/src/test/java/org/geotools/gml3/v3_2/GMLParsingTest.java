@@ -22,9 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.io.FileUtils;
@@ -34,9 +32,14 @@ import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.referencing.CRS;
+import org.geotools.util.NullEntityResolver;
 import org.geotools.util.URLs;
+import org.geotools.util.factory.Hints;
+import org.geotools.xml.XMLUtils;
 import org.geotools.xsd.Parser;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
@@ -44,6 +47,15 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 public class GMLParsingTest {
+    @Before
+    public void setUp() throws Exception {
+        Hints.putSystemDefault(Hints.ENTITY_RESOLVER, NullEntityResolver.INSTANCE);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        Hints.removeSystemDefault(Hints.ENTITY_RESOLVER);
+    }
 
     @Test
     public void testGML() throws Exception {
@@ -57,17 +69,16 @@ public class GMLParsingTest {
         schema.deleteOnExit();
         FileUtils.copyURLToFile(getClass().getResource("test.xsd"), schema);
 
-        Document dom = DocumentBuilderFactory.newInstance()
-                .newDocumentBuilder()
-                .parse(getClass().getResourceAsStream("test.xml"));
+        Document dom = XMLUtils.newDocumentBuilder().parse(getClass().getResourceAsStream("test.xml"));
         URL schemaURL = URLs.fileToUrl(schema.getAbsoluteFile());
         dom.getDocumentElement()
                 .setAttribute("xsi:schemaLocation", "http://www.geotools.org/test " + schemaURL.getFile());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        TransformerFactory.newInstance().newTransformer().transform(new DOMSource(dom), new StreamResult(out));
+        XMLUtils.newTransformer().transform(new DOMSource(dom), new StreamResult(out));
 
         GMLConfiguration config = new GMLConfiguration();
         Parser p = new Parser(config);
+        p.setEntityResolver(NullEntityResolver.INSTANCE);
         Object o = p.parse(new ByteArrayInputStream(out.toByteArray()));
         Assert.assertTrue(o instanceof FeatureCollection);
 

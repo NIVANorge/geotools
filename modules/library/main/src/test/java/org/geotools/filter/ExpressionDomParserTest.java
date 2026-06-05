@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -85,12 +86,12 @@ public class ExpressionDomParserTest {
     }
 
     Node getDocumentNode() throws ParserConfigurationException, SAXException, IOException {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance(); // NOPMD AvoidDocumentBuilderFactory
+        DocumentBuilder builder = factory.newDocumentBuilder(); // NOPMD AvoidDocumentBuilder
         StringBuilder xmlStringBuilder = new StringBuilder();
         xmlStringBuilder.append("<?xml version=\"1.0\"?> <Literal>3</Literal>");
         ByteArrayInputStream input =
-                new ByteArrayInputStream(xmlStringBuilder.toString().getBytes("UTF-8"));
+                new ByteArrayInputStream(xmlStringBuilder.toString().getBytes(StandardCharsets.UTF_8));
         return builder.parse(input).getDocumentElement();
     }
 }

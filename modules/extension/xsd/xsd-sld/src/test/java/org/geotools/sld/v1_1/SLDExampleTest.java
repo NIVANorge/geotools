@@ -42,6 +42,7 @@ import org.geotools.api.style.Rule;
 import org.geotools.api.style.Style;
 import org.geotools.api.style.StyledLayerDescriptor;
 import org.geotools.api.style.TextSymbolizer;
+import org.geotools.util.NullEntityResolver;
 import org.geotools.xsd.Parser;
 import org.junit.Assert;
 import org.junit.Test;
@@ -131,7 +132,7 @@ public class SLDExampleTest {
     Object parse(String filename) throws Exception {
         SLDConfiguration sld = new SLDConfiguration();
         try (InputStream location = getClass().getResourceAsStream(filename)) {
-            return new Parser(sld).parse(location);
+            return new Parser(sld, NullEntityResolver.INSTANCE).parse(location);
         }
     }
 
@@ -139,6 +140,7 @@ public class SLDExampleTest {
         SLDConfiguration sld = new SLDConfiguration();
         try (InputStream location = getClass().getResourceAsStream(filename)) {
             Parser p = new Parser(sld);
+            p.setEntityResolver(NullEntityResolver.INSTANCE);
             p.validate(location);
             return p.getValidationErrors();
         }
@@ -150,7 +152,7 @@ public class SLDExampleTest {
         String file = "../example-textsymbolizer-externalentities.xml";
 
         Parser parser = new Parser(new SLDConfiguration());
-
+        parser.setEntityResolver(NullEntityResolver.INSTANCE);
         try (InputStream location = getClass().getResourceAsStream(file)) {
             parser.parse(location);
             Assert.fail("parsing should fail with a FileNotFoundException because the parser try to "
@@ -158,7 +160,7 @@ public class SLDExampleTest {
         } catch (FileNotFoundException e) {
         }
 
-        // set an entity resolver to prevent access to the local file system
+        // Set an entity resolver to prevent access to the local file system, and indeed anything...
         parser.setEntityResolver(new EntityResolver2() {
             @Override
             public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
@@ -167,8 +169,7 @@ public class SLDExampleTest {
 
             @Override
             public InputSource getExternalSubset(String name, String baseURI) throws SAXException, IOException {
-                // TODO Auto-generated method stub
-                return null;
+                return new InputSource();
             }
 
             @Override

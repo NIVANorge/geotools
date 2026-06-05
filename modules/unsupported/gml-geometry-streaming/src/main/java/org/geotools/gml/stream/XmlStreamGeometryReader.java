@@ -65,6 +65,8 @@ public class XmlStreamGeometryReader {
     /**
      * Create a new instance of the XML Stream Geometry Reader.
      *
+     * <p>Reader is required to have DTD entity resolution disabled.
+     *
      * @param reader the reader providing the data to parse
      */
     public XmlStreamGeometryReader(final XMLStreamReader reader) {
@@ -73,6 +75,8 @@ public class XmlStreamGeometryReader {
 
     /**
      * Create a new instance of the XML Stream Geometry Reader.
+     *
+     * <p>Reader is required to have DTD entity resolution disabled.
      *
      * @param reader the reader providing the data to parse
      * @param geometryFactory a specific {@link GeometryFactory} to use for constructing geometries
@@ -130,7 +134,7 @@ public class XmlStreamGeometryReader {
      *     {@link #setUnsafeXMLAllowed setUnsafeXMLAllowed}.
      */
     private void checkUnsafeXML() throws IllegalStateException {
-        if (!this.unsafeXMLAllowed) {
+        if (!isUnsafeXMLAllowed()) {
             // Only check whether DTDs are enabled because when DTDs are not supported, XXE and XML
             // bombs are not possible. Even if DTDs are enabled but external entities are disabled,
             // XML entity expansion and thus XML bombs are still possible.

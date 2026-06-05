@@ -37,13 +37,11 @@ import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.namespace.QName;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMResult;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
@@ -523,7 +521,7 @@ public class Encoder {
         }
 
         // create the document serializer
-        SAXTransformerFactory txFactory = (SAXTransformerFactory) SAXTransformerFactory.newInstance();
+        SAXTransformerFactory txFactory = XMLUtils.newSaxTransformerFactory();
 
         TransformerHandler xmls;
         try {
@@ -612,12 +610,10 @@ public class Encoder {
             }
 
             // create the document
-            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-
             try {
-                doc = docFactory.newDocumentBuilder().newDocument();
+                doc = XMLUtils.newDocumentBuilder().newDocument();
             } catch (ParserConfigurationException e) {
-                new IOException().initCause(e);
+                throw new IOException("Unable to create document", e);
             }
 
             encoded = new Stack<>();
@@ -1103,7 +1099,8 @@ public class Encoder {
 
         ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
         DOMResult result = new DOMResult();
-        Transformer tx = TransformerFactory.newInstance().newTransformer();
+
+        Transformer tx = XMLUtils.newTransformer();
         tx.transform(new StreamSource(in), result);
         return (Document) result.getNode();
     }

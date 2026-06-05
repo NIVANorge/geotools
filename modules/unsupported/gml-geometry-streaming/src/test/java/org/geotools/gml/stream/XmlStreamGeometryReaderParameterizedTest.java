@@ -36,6 +36,8 @@ import org.geotools.geometry.jts.CompoundCurve;
 import org.geotools.geometry.jts.MultiCurve;
 import org.geotools.geometry.jts.MultiSurface;
 import org.geotools.geometry.jts.WKTWriter2;
+import org.geotools.util.NullEntityResolver;
+import org.geotools.xml.XMLUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -190,9 +192,11 @@ public class XmlStreamGeometryReaderParameterizedTest {
     }
 
     private void testWithGmlString(final String gml, final boolean isGml3_2) throws Exception {
-        XMLInputFactory f = XMLInputFactory.newInstance();
-        f.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
-        XMLStreamReader r = f.createXMLStreamReader(new StringReader(gml));
+        XMLInputFactory factory = XMLUtils.newXMLInputFactory();
+        if (factory.isPropertySupported(XMLInputFactory.SUPPORT_DTD)) {
+            factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+        }
+        XMLStreamReader r = factory.createXMLStreamReader(new StringReader(gml));
         XmlStreamGeometryReader geometryReader = new XmlStreamGeometryReader(r);
         r.nextTag();
         Geometry g = geometryReader.readGeometry();
@@ -219,6 +223,7 @@ public class XmlStreamGeometryReaderParameterizedTest {
             configuration = new org.geotools.gml3.GMLConfiguration();
         }
         org.geotools.xsd.Parser parser = new org.geotools.xsd.Parser(configuration);
+        parser.setEntityResolver(NullEntityResolver.INSTANCE);
         return (Geometry) parser.parse(new StringReader(gml));
     }
 }

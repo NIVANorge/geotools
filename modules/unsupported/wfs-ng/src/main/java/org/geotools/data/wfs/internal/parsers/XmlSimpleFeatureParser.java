@@ -43,8 +43,12 @@ import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.gml.stream.XmlStreamGeometryReader;
 import org.geotools.gml3.GML;
 import org.geotools.util.Converters;
+import org.geotools.util.factory.GeoTools;
+import org.geotools.util.factory.Hints;
 import org.geotools.wfs.WFS;
+import org.geotools.xml.XMLUtils;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.xml.sax.EntityResolver;
 
 /**
  * A {@link GetParser<SimpleFeature>} implementation that uses plain xml pull to parse a GetFeature response.
@@ -92,11 +96,23 @@ public class XmlSimpleFeatureParser implements GetParser<SimpleFeature> {
         this.builder = new SimpleFeatureBuilder(targetType);
 
         try {
-            XMLInputFactory factory = XMLInputFactory.newFactory();
+            final EntityResolver entityResolver = GeoTools.getEntityResolver(null);
+            Hints hints = new Hints(Hints.ENTITY_RESOLVER, entityResolver);
+            XMLInputFactory factory = XMLUtils.newXMLInputFactory(hints);
+
             // disable DTDs
-            factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+            if (factory.isPropertySupported(XMLInputFactory.SUPPORT_DTD)) {
+                factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+            }
+            if (factory.isPropertySupported(XMLInputFactory.IS_COALESCING)) {
+                factory.setProperty(XMLInputFactory.IS_COALESCING, false);
+            }
+
             // disable external entities
-            factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+            if (factory.isPropertySupported(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES)) {
+                factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, true);
+            }
+
             parser = factory.createXMLStreamReader(inputStream, "UTF-8");
 
             geometryReader = new XmlStreamGeometryReader(parser, new GeometryFactory());

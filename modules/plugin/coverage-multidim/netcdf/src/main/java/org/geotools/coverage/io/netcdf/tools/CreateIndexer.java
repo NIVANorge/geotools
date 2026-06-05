@@ -35,7 +35,6 @@ import javax.imageio.ImageReader;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import org.apache.commons.io.FileUtils;
@@ -43,6 +42,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.geotools.imageio.netcdf.NetCDFImageReaderSpi;
 import org.geotools.util.SuppressFBWarnings;
+import org.geotools.xml.XMLUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -143,6 +143,8 @@ public class CreateIndexer {
         System.out.println("Grabbing the generated xml: " + finalAuxFile);
 
         SAXBuilder saxBuilder = new SAXBuilder();
+        saxBuilder.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+
         Document doc = saxBuilder.build(finalAuxFile);
         Element root = doc.getRootElement();
         Set<String> timeAttributes = new HashSet<>();
@@ -213,7 +215,7 @@ public class CreateIndexer {
 
     private static void formatAuxiliaryXml(File auxiliaryFile, File finalAuxFile)
             throws FileNotFoundException, TransformerException {
-        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        Transformer transformer = XMLUtils.newTransformer();
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
 

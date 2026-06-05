@@ -26,9 +26,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.io.FileUtils;
@@ -42,7 +40,10 @@ import org.geotools.data.complex.feature.type.Types;
 import org.geotools.data.solr.SolrTypeData.SolrTypes;
 import org.geotools.data.solr.StationData.Stations;
 import org.geotools.test.OnlineTestCase;
+import org.geotools.util.NullEntityResolver;
 import org.geotools.util.URLs;
+import org.geotools.util.factory.Hints;
+import org.geotools.xml.XMLUtils;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.w3c.dom.Document;
@@ -94,6 +95,8 @@ public abstract class AppSchemaOnlineTestSupport extends OnlineTestCase {
 
     @Override
     protected void setUpInternal() throws Exception {
+        Hints.putSystemDefault(Hints.ENTITY_RESOLVER, NullEntityResolver.INSTANCE);
+
         configFieldsSetup();
         TestContainersSupport.solrCoreUrl(CORE_NAME);
         fixture.setProperty(SOLR_URL_KEY, TestContainersSupport.solrServerUrl());
@@ -169,9 +172,7 @@ public abstract class AppSchemaOnlineTestSupport extends OnlineTestCase {
 
     protected void copyAndPatchTestData(String baseFileName) throws Exception {
         File file = URLs.urlToFile(this.getClass().getResource(testData + baseFileName));
-        Document doc = DocumentBuilderFactory.newInstance()
-                .newDocumentBuilder()
-                .parse(new InputSource(new FileInputStream(file)));
+        Document doc = XMLUtils.newDocumentBuilder().parse(new InputSource(new FileInputStream(file)));
         NodeList solrStores = doc.getElementsByTagName("SolrDataStore");
         for (int i = 0; i < solrStores.getLength(); i++) {
             NodeList children = solrStores.item(i).getChildNodes();
@@ -218,7 +219,7 @@ public abstract class AppSchemaOnlineTestSupport extends OnlineTestCase {
                     break;
             }
         }
-        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        Transformer transformer = XMLUtils.newTransformer();
         transformer.transform(new DOMSource(doc), new StreamResult(new File(tempDir, baseFileName)));
     }
 

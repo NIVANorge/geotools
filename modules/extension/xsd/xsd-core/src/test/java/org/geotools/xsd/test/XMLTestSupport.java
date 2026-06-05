@@ -25,14 +25,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import javax.xml.namespace.QName;
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.eclipse.xsd.XSDSchema;
 import org.geotools.test.xml.XmlTestSupport;
+import org.geotools.util.NullEntityResolver;
+import org.geotools.util.factory.Hints;
+import org.geotools.xml.XMLUtils;
 import org.geotools.xsd.Binding;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.DOMParser;
@@ -44,6 +46,7 @@ import org.geotools.xsd.impl.BindingLoader;
 import org.geotools.xsd.impl.BindingWalkerFactoryImpl;
 import org.geotools.xsd.impl.NamespaceSupportWrapper;
 import org.geotools.xsd.impl.SchemaIndexImpl;
+import org.junit.After;
 import org.junit.Before;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.defaults.DefaultPicoContainer;
@@ -150,10 +153,16 @@ public abstract class XMLTestSupport extends XmlTestSupport {
     /** Creates an empty xml document. */
     @Before
     public void setUp() throws Exception {
-        DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+        Hints.putSystemDefault(Hints.ENTITY_RESOLVER, NullEntityResolver.INSTANCE);
+        DocumentBuilderFactory docFactory = XMLUtils.newDocumentBuilderFactory();
         docFactory.setNamespaceAware(true);
 
-        document = docFactory.newDocumentBuilder().newDocument();
+        document = docFactory.newDocumentBuilder().newDocument(); // NOPMD: AvoidDocumentBuilder
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        Hints.removeSystemDefault(Hints.ENTITY_RESOLVER);
     }
 
     /**
@@ -266,10 +275,12 @@ public abstract class XMLTestSupport extends XmlTestSupport {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         encoder.encode(object, element, output);
 
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilderFactory dbf = XMLUtils.newDocumentBuilderFactory();
         dbf.setNamespaceAware(true);
 
-        return dbf.newDocumentBuilder().parse(new ByteArrayInputStream(output.toByteArray()));
+        @SuppressWarnings("PMD.AvoidDocumentBuilder")
+        DocumentBuilder db = dbf.newDocumentBuilder();
+        return db.parse(new ByteArrayInputStream(output.toByteArray()));
     }
 
     /**
@@ -285,11 +296,10 @@ public abstract class XMLTestSupport extends XmlTestSupport {
 
     /** Convenience method to dump the contents of the document to stdout. */
     public static void print(Node dom) throws Exception {
-        TransformerFactory txFactory = TransformerFactory.newInstance();
-        Transformer tx = txFactory.newTransformer();
+        Transformer tx = XMLUtils.newTransformer();
         tx.setOutputProperty(OutputKeys.INDENT, "yes");
 
-        tx.transform(new DOMSource(dom), new StreamResult(System.out));
+        tx.transform(XMLUtils.source(dom), new StreamResult(System.out));
     }
 
     /**
@@ -371,8 +381,9 @@ public abstract class XMLTestSupport extends XmlTestSupport {
      *
      * @param xml A string of xml
      */
+    @SuppressWarnings("PMD.AvoidDocumentBuilder")
     public void buildDocument(String xml) throws Exception {
-        DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilderFactory docFactory = XMLUtils.newDocumentBuilderFactory();
         docFactory.setNamespaceAware(true);
 
         document =

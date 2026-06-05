@@ -31,7 +31,7 @@ import org.xml.sax.ext.EntityResolver2;
  *
  * @author Jody Garnett (Boundless)
  */
-public class NullEntityResolver implements EntityResolver2, Serializable {
+public class NullEntityResolver implements EntityResolver3, Serializable {
 
     /** serialVersionUID */
     @Serial
@@ -42,6 +42,16 @@ public class NullEntityResolver implements EntityResolver2, Serializable {
 
     protected NullEntityResolver() {
         // singleton
+    }
+
+    /**
+     * NullEntityResolver allows access to {@code "all"} protocols.
+     *
+     * @return {@code "all"}
+     */
+    @Override
+    public String getAccess() {
+        return "all";
     }
 
     /** @return {@code null} to request that the parser open a regular URI connection to the system identifier. */
@@ -66,5 +76,10 @@ public class NullEntityResolver implements EntityResolver2, Serializable {
     public InputSource resolveEntity(String name, String publicId, String baseURI, String systemId)
             throws SAXException, IOException {
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return "NullEntityResolver";
     }
 }

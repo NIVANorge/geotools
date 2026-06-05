@@ -27,9 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.io.FileUtils;
@@ -47,7 +45,10 @@ import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.feature.NameImpl;
 import org.geotools.test.OnlineTestCase;
+import org.geotools.util.NullEntityResolver;
 import org.geotools.util.URLs;
+import org.geotools.util.factory.Hints;
+import org.geotools.xml.XMLUtils;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -126,12 +127,20 @@ public final class AppSchemaIT extends OnlineTestCase {
 
     @Override
     protected void setUpInternal() throws Exception {
+        super.setUpInternal();
+        Hints.putSystemDefault(Hints.ENTITY_RESOLVER, NullEntityResolver.INSTANCE);
         TestContainersSupport.solrCoreUrl(CORE_NAME);
         fixture.setProperty(SOLR_URL_KEY, TestContainersSupport.solrServerUrl());
         client = new HttpJdkSolrClient.Builder(getSolrCoreURL()).build();
         solrDataSetup();
         prepareFiles();
         setupDataStore();
+    }
+
+    @Override
+    protected final void tearDownInternal() throws Exception {
+        Hints.removeSystemDefault(Hints.ENTITY_RESOLVER);
+        super.tearDownInternal();
     }
 
     protected void setupDataStore() throws Exception {
@@ -193,9 +202,7 @@ public final class AppSchemaIT extends OnlineTestCase {
 
         // Modify datasource and copy xml
         File xmlFile = URLs.urlToFile(AppSchemaIT.class.getResource(testData + xmlFileName));
-        Document doc = DocumentBuilderFactory.newInstance()
-                .newDocumentBuilder()
-                .parse(new InputSource(new FileInputStream(xmlFile)));
+        Document doc = XMLUtils.newDocumentBuilder().parse(new InputSource(new FileInputStream(xmlFile)));
         Node solrDs = doc.getElementsByTagName("SolrDataStore").item(0);
         NodeList dsChilds = solrDs.getChildNodes();
         for (int i = 0; i < dsChilds.getLength(); i++) {
@@ -205,8 +212,7 @@ public final class AppSchemaIT extends OnlineTestCase {
             }
         }
         // write new xml file:
-        TransformerFactory transformerFactory = TransformerFactory.newInstance();
-        Transformer transformer = transformerFactory.newTransformer();
+        Transformer transformer = XMLUtils.newTransformer();
         DOMSource source = new DOMSource(doc);
         StreamResult result = new StreamResult(new File(testDir.getPath() + "/" + xmlFileName));
         transformer.transform(source, result);

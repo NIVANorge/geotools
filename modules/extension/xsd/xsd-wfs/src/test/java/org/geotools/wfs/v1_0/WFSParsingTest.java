@@ -42,7 +42,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import net.opengis.ows10.DCPType;
@@ -67,7 +66,9 @@ import org.geotools.api.filter.capability.FilterCapabilities;
 import org.geotools.api.filter.capability.Operator;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
+import org.geotools.util.NullEntityResolver;
 import org.geotools.util.URLs;
+import org.geotools.xml.XMLUtils;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.Parser;
 import org.geotools.xsd.Schemas;
@@ -101,7 +102,7 @@ public class WFSParsingTest {
 
         configuration = new org.geotools.wfs.v1_0.WFSCapabilitiesConfiguration();
 
-        Parser parser = new Parser(configuration);
+        Parser parser = new Parser(configuration, NullEntityResolver.INSTANCE);
         Object parsed = parser.parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
         assertNotNull(parsed);
         assertTrue(parsed.getClass().getName(), parsed instanceof WFSCapabilitiesType);
@@ -115,7 +116,7 @@ public class WFSParsingTest {
     public void testParseGetCapabilities() throws Exception {
         configuration = new org.geotools.wfs.v1_0.WFSCapabilitiesConfiguration();
 
-        Parser parser = new Parser(configuration);
+        Parser parser = new Parser(configuration, NullEntityResolver.INSTANCE);
         Object parsed = parser.parse(getClass().getResourceAsStream("geoserver-GetCapabilities.xml"));
 
         assertNotNull(parsed);
@@ -136,7 +137,7 @@ public class WFSParsingTest {
     @Test
     @Ignore
     public void testParseGetCapabilitiesDeegree() throws Exception {
-        Parser parser = new Parser(configuration);
+        Parser parser = new Parser(configuration, NullEntityResolver.INSTANCE);
         WFSCapabilitiesType caps =
                 (WFSCapabilitiesType) parser.parse(getClass().getResourceAsStream("deegree-GetCapabilities.xml"));
 
@@ -343,10 +344,10 @@ public class WFSParsingTest {
 
         try (InputStream in = getClass().getResourceAsStream("geoserver-GetFeature.xml")) {
 
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilderFactory dbf = XMLUtils.newDocumentBuilderFactory();
             dbf.setNamespaceAware(true);
 
-            DocumentBuilder db = dbf.newDocumentBuilder();
+            DocumentBuilder db = XMLUtils.newDocumentBuilder(dbf);
             Document doc = db.parse(in);
 
             // http://cite.opengeospatial.org/gmlsf
@@ -363,12 +364,12 @@ public class WFSParsingTest {
             tmp = File.createTempFile("geoserver-GetFeature", "xml");
             tmp.deleteOnExit();
 
-            Transformer tx = TransformerFactory.newInstance().newTransformer();
+            Transformer tx = XMLUtils.newTransformer();
             tx.transform(new DOMSource(doc), new StreamResult(tmp));
         }
         try (InputStream in = new FileInputStream(tmp)) {
 
-            Parser parser = new Parser(configuration);
+            Parser parser = new Parser(configuration, NullEntityResolver.INSTANCE);
             FeatureCollectionType fc = (FeatureCollectionType) parser.parse(in);
             assertNotNull(fc);
 
@@ -435,7 +436,7 @@ public class WFSParsingTest {
 
     @Test
     public void testParseTransactionResponse() throws IOException, SAXException, ParserConfigurationException {
-        Parser parser = new Parser(configuration);
+        Parser parser = new Parser(configuration, NullEntityResolver.INSTANCE);
         Object parsed = parser.parse(getClass().getResourceAsStream("transactionResponse.xml"));
 
         assertNotNull(parsed);

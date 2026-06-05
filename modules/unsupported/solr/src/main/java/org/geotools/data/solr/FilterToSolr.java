@@ -18,9 +18,9 @@
 package org.geotools.data.solr;
 
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -82,6 +82,7 @@ import org.geotools.api.filter.temporal.TEquals;
 import org.geotools.api.filter.temporal.TOverlaps;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.FilterCapabilities;
+import org.geotools.filter.IllegalFilterException;
 
 /** Encodes a OGC filter into a SOLR query syntax */
 public class FilterToSolr implements FilterVisitor {
@@ -144,7 +145,7 @@ public class FilterToSolr implements FilterVisitor {
                 throw new Exception("Problem writing filter: ", ioe);
             }
         } else {
-            throw new Exception("Filter type not supported");
+            throw new IllegalFilterException("Filter type not natively supported: " + filter.toString());
         }
     }
 
@@ -738,11 +739,7 @@ public class FilterToSolr implements FilterVisitor {
             FID = FID.substring(this.featureTypeName.length() + 1);
         }
 
-        try {
-            FID = URLDecoder.decode(FID, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        FID = URLDecoder.decode(FID, StandardCharsets.UTF_8);
 
         return FID;
     }

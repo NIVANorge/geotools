@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import org.geotools.api.filter.expression.Expression;
 import org.geotools.api.style.ContrastEnhancement;
 import org.geotools.api.style.ContrastMethod;
@@ -51,6 +50,8 @@ import org.geotools.api.style.Style;
 import org.geotools.api.style.StyleFactory;
 import org.geotools.api.style.Symbolizer;
 import org.geotools.factory.CommonFactoryFinder;
+import org.geotools.util.NullEntityResolver;
+import org.geotools.xml.XMLUtils;
 import org.junit.Test;
 import org.xml.sax.InputSource;
 
@@ -638,6 +639,7 @@ public class SLDParserTest {
     @Test
     public void testLocalizedWithNamespace() throws Exception {
         SLDParser parser = new SLDParser(styleFactory, input(LocalizedSLDWithNamespace));
+        parser.setEntityResolver(NullEntityResolver.INSTANCE);
         Style[] styles = parser.readXML();
         assertEquals(
                 "english",
@@ -783,14 +785,14 @@ public class SLDParserTest {
     public void testExternalEntitiesDisabled() {
         // this SLD file references as external entity a file on the local filesystem
         SLDParser parser = new SLDParser(styleFactory, input(SLD_EXTERNALENTITY));
-
-        // without a custom EntityResolver, the parser will try to read the entity file on the local
+        parser.setEntityResolver(NullEntityResolver.INSTANCE);
+        // With NullEntityResolver EntityResolver, the parser be able to read the entity file on the local
         // file system
         try {
             parser.readXML();
             fail("parsing should thrown an error");
         } catch (RuntimeException e) {
-            assertTrue(e.getCause() instanceof FileNotFoundException);
+            assertTrue(e.getMessage(), e.getCause() instanceof FileNotFoundException);
         }
 
         parser = new SLDParser(styleFactory, input(SLD_EXTERNALENTITY));
@@ -823,7 +825,7 @@ public class SLDParserTest {
 
     @Test
     public void testStrokeColorWithEnv() throws Exception {
-        DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        DocumentBuilder builder = XMLUtils.newDocumentBuilder();
         org.w3c.dom.Document node =
                 builder.parse(new ByteArrayInputStream(formattedCssStrokeParameter.getBytes(StandardCharsets.UTF_8)));
         SLDParser parser = new SLDParser(styleFactory);
@@ -835,7 +837,7 @@ public class SLDParserTest {
     @Test
     public void testContrastEnhancement() throws Exception {
 
-        DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        DocumentBuilder builder = XMLUtils.newDocumentBuilder();
         org.w3c.dom.Document node =
                 builder.parse(new ByteArrayInputStream(contrastEnhance.getBytes(StandardCharsets.UTF_8)));
         // First check the happy path for normalize

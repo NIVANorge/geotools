@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -82,6 +83,9 @@ import org.eclipse.xsd.util.XSDUtil;
 import org.geotools.util.DefaultEntityResolver;
 import org.geotools.util.URLs;
 import org.geotools.util.Utilities;
+import org.geotools.util.factory.GeoTools;
+import org.geotools.util.factory.Hints;
+import org.geotools.xml.XMLUtils;
 import org.geotools.xsd.impl.SchemaIndexImpl;
 import org.geotools.xsd.impl.TypeWalker;
 import org.picocontainer.ComponentAdapter;
@@ -93,6 +97,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.ext.EntityResolver2;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
@@ -123,7 +128,7 @@ public class Schemas {
      * @return a {@link SchemaIndex} holding the schemas related to <code>configuration</code>
      */
     public static final SchemaIndex findSchemas(Configuration configuration) {
-        return findSchemas(configuration, null);
+        return findSchemas(configuration, GeoTools.getEntityResolver(null));
     }
     /**
      * Finds all the XSDSchemas used by the {@link Configuration configuration} by looking at the configuration's schema
@@ -154,21 +159,24 @@ public class Schemas {
 
             String namespaceURI = conf.getNamespaceURI();
             String schemaLocation = null;
-
-            // first check if entity resolver would allow reading the schema location
-            if (entityResolver != null) {
-                try {
-                    entityResolver.resolveEntity(null, conf.getXSD().getSchemaLocation());
-                } catch (IOException | SAXException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
             try {
                 URL location = new URL(conf.getXSD().getSchemaLocation());
                 schemaLocation = location.toExternalForm();
             } catch (MalformedURLException e) {
                 throw new RuntimeException(e);
+            }
+
+            // first check if entity resolver would allow reading the schema location
+            if (entityResolver != null) {
+                try {
+                    if (entityResolver instanceof EntityResolver2 entityResolver2) {
+                        entityResolver2.resolveEntity(null, null, null, schemaLocation);
+                    } else {
+                        entityResolver.resolveEntity(null, schemaLocation);
+                    }
+                } catch (IOException | SAXException e) {
+                    throw new RuntimeException(e);
+                }
             }
 
             if (LOGGER.isLoggable(Level.FINE)) {
@@ -233,7 +241,7 @@ public class Schemas {
     public static final XSDSchema parse(
             String location, List<XSDSchemaLocator> locators, List<XSDSchemaLocationResolver> resolvers)
             throws IOException {
-        return parse(location, locators, resolvers, emptyList(), null);
+        return parse(location, locators, resolvers, emptyList(), GeoTools.getEntityResolver(null));
     }
 
     /**
@@ -329,7 +337,6 @@ public class Schemas {
             } catch (SAXException e) {
                 throw new IOException(e);
             }
-
             options.put(XSDResourceImpl.XSD_JAXP_CONFIG, new DefaultJAXPConfiguration() {
 
                 @Override
@@ -535,25 +542,42 @@ public class Schemas {
         if (resolvers == null) resolvers = Collections.emptyList();
 
         // create a parser
-        SAXParserFactory factory = SAXParserFactory.newInstance();
+        Hints hints = GeoTools.getDefaultHints();
+        if (entityResolver != null) {
+            hints.put(Hints.ENTITY_RESOLVER, entityResolver);
+        }
+
+        SAXParserFactory factory;
+        factory = XMLUtils.newSAXParserFactory(hints);
+
         factory.setNamespaceAware(true);
         factory.setValidating(false);
-
         SAXParser parser = null;
         try {
             parser = factory.newSAXParser();
+
         } catch (Exception e) {
             throw (IOException) new IOException("could not create parser").initCause(e);
         }
 
-        if (entityResolver != null) {
-            try {
-                parser.getXMLReader().setEntityResolver(entityResolver);
-            } catch (SAXException e) {
-                throw new IOException(e);
+        try {
+            // XMLUtils has configured parser entity resolver provided by Hints
+            entityResolver = parser.getXMLReader().getEntityResolver();
+            if (entityResolver != null) {
+                try {
+                    parser.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "all");
+                } catch (IllegalArgumentException notSupported) {
+                    LOGGER.fine("Parser does not support ACCESS_EXTERNAL_SCHEMA: " + notSupported.getMessage());
+                }
+                try {
+                    parser.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "all");
+                } catch (IllegalArgumentException notSupported) {
+                    LOGGER.fine("Parser does not support ACCESS_EXTERNAL_SCHEMA: " + notSupported.getMessage());
+                }
             }
+        } catch (SAXException e) {
+            throw new IOException(e);
         }
-
         SchemaImportIncludeValidator validator = new SchemaImportIncludeValidator(locators, resolvers, entityResolver);
 
         // queue of files to parse

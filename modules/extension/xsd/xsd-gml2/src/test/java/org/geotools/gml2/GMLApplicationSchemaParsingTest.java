@@ -21,16 +21,17 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.xml.XMLUtils;
 import org.geotools.xsd.StreamingParser;
 import org.junit.Assert;
 import org.junit.Test;
 import org.locationtech.jts.geom.Point;
 import org.w3c.dom.Document;
 
+@SuppressWarnings("PMD.AvoidDocumentBuilder")
 public class GMLApplicationSchemaParsingTest {
     @Test
     public void testStreamFeatureWithIncorrectSchemaLocation() throws Exception {
@@ -39,16 +40,15 @@ public class GMLApplicationSchemaParsingTest {
 
         try (InputStream in = getClass().getResourceAsStream("feature.xml")) {
 
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilderFactory factory = XMLUtils.newDocumentBuilderFactory();
             factory.setNamespaceAware(true);
-
             Document document = factory.newDocumentBuilder().parse(in);
 
             // update hte schema location
             document.getDocumentElement().removeAttribute("xsi:schemaLocation");
 
             // reserialize the document
-            Transformer tx = TransformerFactory.newInstance().newTransformer();
+            Transformer tx = XMLUtils.newTransformer();
             tx.transform(new DOMSource(document), new StreamResult(schemaFile));
         }
         try (FileInputStream in = new FileInputStream(schemaFile)) {
@@ -72,16 +72,16 @@ public class GMLApplicationSchemaParsingTest {
         schemaFile.deleteOnExit();
         try (InputStream in = getClass().getResourceAsStream("feature.xml")) {
 
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilderFactory factory = XMLUtils.newDocumentBuilderFactory();
             factory.setNamespaceAware(true);
 
-            Document document = factory.newDocumentBuilder().parse(in);
+            Document document = XMLUtils.newDocumentBuilder(factory).parse(in);
 
             // update hte schema location
             document.getDocumentElement().removeAttribute("xsi:schemaLocation");
 
             // reserialize the document
-            Transformer tx = TransformerFactory.newInstance().newTransformer();
+            Transformer tx = XMLUtils.newTransformer();
             tx.transform(new DOMSource(document), new StreamResult(schemaFile));
         }
         try (InputStream in = new FileInputStream(schemaFile)) {
@@ -106,17 +106,17 @@ public class GMLApplicationSchemaParsingTest {
         File schemaFile = File.createTempFile("test", "xsd");
         schemaFile.deleteOnExit();
         try (InputStream in = getClass().getResourceAsStream("feature.xml")) {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilderFactory factory = XMLUtils.newDocumentBuilderFactory();
             factory.setNamespaceAware(true);
 
-            Document document = factory.newDocumentBuilder().parse(in);
+            Document document = XMLUtils.newDocumentBuilder(factory).parse(in);
 
             // update hte schema location
             String schemaLocation = getClass().getResource("test.xsd").toString();
             document.getDocumentElement().setAttribute("xsi:schemaLocation", TEST.NAMESPACE + " " + schemaLocation);
 
             // reserialize the document
-            Transformer tx = TransformerFactory.newInstance().newTransformer();
+            Transformer tx = XMLUtils.newTransformer();
             tx.transform(new DOMSource(document), new StreamResult(schemaFile));
         }
         try (InputStream in = new FileInputStream(schemaFile)) {

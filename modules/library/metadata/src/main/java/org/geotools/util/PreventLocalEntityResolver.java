@@ -24,11 +24,9 @@ import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
-import org.geotools.util.factory.GeoTools;
 import org.geotools.util.logging.Logging;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.ext.EntityResolver2;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
@@ -36,11 +34,11 @@ import org.xml.sax.helpers.DefaultHandler;
  *
  * <p>When parsing an XML entity reference to a local file a SAXException is thrown, which can be handled appropriately.
  *
- * <p>This implementation is both recommended and the default returned by {@link GeoTools#getEntityResolver()}.
+ * <p>For a more restrictive EntityResolver {@link DefaultEntityResolver} is recommended.
  *
  * @author Davide Savazzi - geo-solutions.it
  */
-public class PreventLocalEntityResolver implements EntityResolver2, Serializable {
+public class PreventLocalEntityResolver implements EntityResolver3, Serializable {
 
     /** serialVersionUID */
     @Serial
@@ -51,11 +49,17 @@ public class PreventLocalEntityResolver implements EntityResolver2, Serializable
 
     protected static final Logger LOGGER = Logging.getLogger(PreventLocalEntityResolver.class);
 
-    // allow schema parsing for validation.
-    // http(s) - external schema reference
-    // jar - internal schema reference
-    // vfs - internal schema reference (JBoss/WildFly)
-    // jar:nested - internal schema reference (Spring Boot)
+    /**
+     * Allow uri references schema parsing for validation.
+     *
+     * <ul>
+     *   <li>allow {@code xsd} schema parsing for validation
+     *   <li>{@code http(s)} - external schema reference
+     *   <li>{@code jar} - internal schema reference
+     *   <li>{@code jar:nested} - internal schema reference (SpringBoot)
+     *   <li>{@code vfs} - internal schema reference (JBoss/WildFly)
+     * </ul>
+     */
     private static final Pattern ALLOWED_URIS = Pattern.compile("(?i)(jar:file|jar:nested|http|vfs)[^?#;]*\\.xsd");
 
     /** Singleton instance of PreventLocalEntityResolver */
@@ -63,6 +67,17 @@ public class PreventLocalEntityResolver implements EntityResolver2, Serializable
 
     protected PreventLocalEntityResolver() {
         // singleton
+    }
+
+    /**
+     * PreventLocalEntityResolver provides access {@code "http"} and internal {@code "jar:file,jar:nested,vfs"}
+     * protocols.
+     *
+     * @return {@code "http,jar:file,jar:nested,vfs"}
+     */
+    @Override
+    public String getAccess() {
+        return "http,jar:file,jar:nested,vfs";
     }
 
     @Override

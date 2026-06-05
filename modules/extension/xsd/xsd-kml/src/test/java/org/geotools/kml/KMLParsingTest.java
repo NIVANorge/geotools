@@ -22,13 +22,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.api.style.FeatureTypeStyle;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.kml.bindings.DocumentTypeBinding;
+import org.geotools.util.NullEntityResolver;
+import org.geotools.xml.XMLUtils;
 import org.geotools.xsd.Encoder;
 import org.geotools.xsd.Parser;
 import org.geotools.xsd.StreamingParser;
@@ -45,6 +46,7 @@ public class KMLParsingTest {
     @Test
     public void testParse() throws Exception {
         Parser parser = new Parser(new KMLConfiguration());
+        parser.setEntityResolver(NullEntityResolver.INSTANCE);
         SimpleFeature f = (SimpleFeature) parser.parse(getClass().getResourceAsStream("states.kml"));
         Assert.assertNotNull(f);
 
@@ -101,7 +103,7 @@ public class KMLParsingTest {
         encoder.encode(features, KML.kml, out);
         // System.out.println(new String(out.toByteArray()));
 
-        DocumentBuilder db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        DocumentBuilder db = XMLUtils.newDocumentBuilder();
         Document d = db.parse(new ByteArrayInputStream(out.toByteArray()));
         Assert.assertEquals("kml:kml", d.getDocumentElement().getNodeName());
         Assert.assertEquals(2, d.getElementsByTagName("kml:Placemark").getLength());
@@ -139,7 +141,7 @@ public class KMLParsingTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         encoder.encode(f, KML.kml, out);
 
-        DocumentBuilder db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        DocumentBuilder db = XMLUtils.newDocumentBuilder();
         Document d = db.parse(new ByteArrayInputStream(out.toByteArray()));
         Assert.assertEquals("kml:kml", d.getDocumentElement().getNodeName());
         Assert.assertEquals(2, d.getElementsByTagName("kml:Placemark").getLength());

@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 import java.awt.Color;
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.MalformedURLException;
@@ -33,7 +34,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.logging.Level;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import org.geotools.api.filter.expression.Expression;
 import org.geotools.api.style.ContrastEnhancement;
 import org.geotools.api.style.ContrastMethod;
@@ -50,10 +55,17 @@ import org.geotools.api.style.Style;
 import org.geotools.api.style.StyleFactory;
 import org.geotools.api.style.Symbolizer;
 import org.geotools.factory.CommonFactoryFinder;
+import org.geotools.test.xml.XmlTestSupport;
+import org.geotools.util.EntityResolver3;
 import org.geotools.util.NullEntityResolver;
+import org.geotools.util.PreventLocalEntityResolver;
+import org.geotools.util.logging.Logging;
 import org.geotools.xml.XMLUtils;
 import org.junit.Test;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 public class SLDParserTest {
 
@@ -243,7 +255,7 @@ public class SLDParserTest {
                 </UserStyle>
             </StyledLayerDescriptor>""";
 
-    static String SLD_EXTERNALENTITY =
+    static String SLD_DTD_EXTERNALENTITY =
             """
             <?xml version="1.0" encoding="UTF-8"?>
             <!DOCTYPE StyledLayerDescriptor [
@@ -322,6 +334,44 @@ public class SLDParserTest {
                   </FeatureTypeStyle>
                 </UserStyle>
               </NamedLayer>
+            </StyledLayerDescriptor>""";
+
+    static String XSD_EXTERNALENTITY =
+            """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:noNamespaceSchemaLocation="file:///this/file/is/top/secret.xsd">
+              <data>Hello World</data>
+            </root>
+            """;
+
+    static String SLD_XSD_EXTERNALENTITY =
+            """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <StyledLayerDescriptor version="1.0.0"\s
+                    xsi:schemaLocation="http://www.opengis.net/sld file:///this/file/is/top/secret.xsd"\s
+                    xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc"\s
+                    xmlns:xlink="http://www.w3.org/1999/xlink"\s
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                <UserStyle>
+                    <Name>Default Styler</Name>
+                    <Title>Default Styler</Title>
+                    <Abstract></Abstract>
+                    <FeatureTypeStyle>
+                        <FeatureTypeName>Feature</FeatureTypeName>
+                        <Rule>
+                            <PointSymbolizer>
+                                <Graphic>
+                                   <Mark>
+                                      <WellKnownName>file://foo.svg</WellKnownName>\
+                                      <Fill/>\
+                                      <Stroke/>\
+                                   </Mark>\
+                                </Graphic>
+                            </PointSymbolizer>
+                        </Rule>
+                    </FeatureTypeStyle>
+                </UserStyle>
             </StyledLayerDescriptor>""";
 
     static String SLD_EXTERNAL_GRAPHIC =
@@ -695,9 +745,12 @@ public class SLDParserTest {
         assertStyles(styles);
 
         try {
+            Logging.getLogger(XMLUtils.class).setLevel(Level.OFF);
             parser.readXML();
             fail("Parsing again Should have thrown exception");
         } catch (Exception e) {
+        } finally {
+            Logging.getLogger(XMLUtils.class).setLevel(Level.INFO);
         }
     }
 
@@ -782,34 +835,137 @@ public class SLDParserTest {
     }
 
     @Test
-    public void testExternalEntitiesDisabled() {
+    public void testXSDExternalEntitiesDisabled() throws ParserConfigurationException {
+        // Test entity resolver against SLD_XSD_EXTERNALENTITY requires validation enabled
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance(); // NOPMD AvoidDocumentBuilderFactory
+        factory.setNamespaceAware(true);
+        factory.setValidating(true);
+        factory.setAttribute(
+                "http://java.sun.com/xml/jaxp/properties/schemaLanguage", XMLConstants.W3C_XML_SCHEMA_NS_URI);
+
+        // 2. Create the DocumentBuilder
+        DocumentBuilder builder = factory.newDocumentBuilder(); // NOPMD AvoidDocumentBuilderFactory
+        builder.setEntityResolver(NullEntityResolver.INSTANCE);
+        builder.setErrorHandler(new ErrorHandler() {
+            @Override
+            public void warning(SAXParseException exception) throws SAXException {}
+
+            @Override
+            public void error(SAXParseException exception) throws SAXException {}
+
+            @Override
+            public void fatalError(SAXParseException exception) throws SAXException {}
+        });
+        try {
+            builder.parse(input(SLD_XSD_EXTERNALENTITY));
+        } catch (SAXException | IOException e) {
+            XmlTestSupport.assertMessageContains(e, "Entity resolution disallowed");
+        }
+
+        // Test SLDParser against SLD_XSD_EXTERNALENTITY requires validation enabled
+        SLDParser parser;
+        parser = new SLDParser(styleFactory, input(SLD_XSD_EXTERNALENTITY));
+        parser.setValidating(true);
+        parser.setEntityResolver(PreventLocalEntityResolver.INSTANCE);
+        try {
+            Logging.getLogger(XMLUtils.class).setLevel(Level.OFF);
+            parser.readXML();
+            fail("parsing should have thrown an error");
+        } catch (RuntimeException e) {
+            assertTrue(
+                    "SAXException expected, was " + e.getCause().getClass().getSimpleName(),
+                    e.getCause() instanceof SAXException);
+            XmlTestSupport.assertMessageContains(e, "Entity resolution disallowed");
+            XmlTestSupport.assertMessageContains(e, "top", "secret");
+        } finally {
+            Logging.getLogger(XMLUtils.class).setLevel(Level.INFO);
+        }
+    }
+
+    @Test
+    public void testDTDExternalEntitiesDisabled() {
         // this SLD file references as external entity a file on the local filesystem
-        SLDParser parser = new SLDParser(styleFactory, input(SLD_EXTERNALENTITY));
+        SLDParser parser;
+        parser = new SLDParser(styleFactory, input(SLD_DTD_EXTERNALENTITY));
         parser.setEntityResolver(NullEntityResolver.INSTANCE);
-        // With NullEntityResolver EntityResolver, the parser be able to read the entity file on the local
-        // file system
+        // With NullEntityResolver, the parser can try and read the entity file on the local file system
         try {
+            // Suppress logging to expected the error message about the disallowed DOCTYPE being logged
+            Logging.getLogger(XMLUtils.class).setLevel(Level.OFF);
             parser.readXML();
             fail("parsing should thrown an error");
         } catch (RuntimeException e) {
-            assertTrue(e.getMessage(), e.getCause() instanceof FileNotFoundException);
+            // Parsing now returns a proper SAXException due to restrictions on parsing preventing
+            // DTD access early so the entityResolver is never called
+            assertTrue(
+                    "SAXException expected, was " + e.getCause().getClass().getSimpleName(),
+                    e.getCause() instanceof SAXException);
+            // DOCTYPE disallowed message, is locale dependent: DOCTYPE non consentito in it_IT.UTF-8
+            XmlTestSupport.assertMessageContains(e, "DOCTYPE");
+        } finally {
+            Logging.getLogger(XMLUtils.class).setLevel(Level.INFO);
         }
 
-        parser = new SLDParser(styleFactory, input(SLD_EXTERNALENTITY));
+        parser = new SLDParser(styleFactory, input(SLD_DTD_EXTERNALENTITY));
+
+        // If we allow DTDs we can restore turn off the parser protections
+        // and rely on the entityResolver (which will in this case produce FileNotFound)
+        parser.setSupportDTD(true);
+        parser.setExpandEntityReferences(true);
+        parser.setEntityResolver(NullEntityResolver.INSTANCE);
+        try {
+            Object obj = parser.readXML();
+            assertNotNull("We do not expect any output", obj);
+            fail("parsing should thrown an error");
+        } catch (RuntimeException e) {
+            assertTrue(
+                    "FileNotFoundException expected, was "
+                            + e.getCause().getClass().getSimpleName(),
+                    e.getCause() instanceof FileNotFoundException);
+            // Windows may not preserve /this/file/is/top/secret path
+            XmlTestSupport.assertMessageContains(e, "top", "secret");
+        }
+
+        parser = new SLDParser(styleFactory, input(SLD_DTD_EXTERNALENTITY));
+
         // Set an EntityResolver implementation to prevent reading entities from the local file
-        // system.
-        // When resolving an XML entity, the empty InputSource returned by this resolver provokes
+        // system. When resolving an XML entity, the empty InputSource returned by this resolver provokes
         // a MalformedURLException
-        parser.setEntityResolver((publicId, systemId) -> new InputSource());
+        parser.setSupportDTD(true);
+        parser.setExpandEntityReferences(true);
+        parser.setEntityResolver(new EntityResolver3() {
+            @Override
+            public String getAccess() {
+                return "all";
+            }
+
+            @Override
+            public InputSource getExternalSubset(String name, String baseURI) throws SAXException, IOException {
+                return new InputSource();
+            }
+
+            @Override
+            public InputSource resolveEntity(String name, String publicId, String baseURI, String systemId)
+                    throws SAXException, IOException {
+                return new InputSource();
+            }
+
+            @Override
+            public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
+                return new InputSource();
+            }
+        });
 
         try {
             parser.readXML();
             fail("parsing should thrown an error");
         } catch (RuntimeException e) {
-            assertTrue(e.getCause() instanceof MalformedURLException);
+            // DTD access is allowed early so the entityResolver called to produce a MalformedURLException
+            assertTrue(e.getMessage(), e.getCause() instanceof MalformedURLException);
         }
 
-        parser = new SLDParser(styleFactory, input(SLD_EXTERNALENTITY));
+        parser = new SLDParser(styleFactory, input(SLD_DTD_EXTERNALENTITY));
+
         // Set another EntityResolver
         parser.setEntityResolver((publicId, systemId) -> {
             if ("file:///this/file/is/top/secret".equals(systemId)) {
@@ -818,6 +974,8 @@ public class SLDParserTest {
                 return new InputSource();
             }
         });
+        // and allow DTD access
+        parser.setSupportDTD(true);
 
         // now parsing shouldn't throw an exception
         parser.readXML();

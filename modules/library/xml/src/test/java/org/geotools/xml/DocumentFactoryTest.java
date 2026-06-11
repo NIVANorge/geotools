@@ -12,12 +12,13 @@
  */
 package org.geotools.xml;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -26,6 +27,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -44,11 +46,12 @@ import org.xml.sax.SAXNotSupportedException;
  * @author Aaron Waddell
  */
 public class DocumentFactoryTest {
-    private final String LOAD_EXTERNAL_DTD = "http://apache.org/xml/features/nonvalidating/load-external-dtd";
+    private static final String DISALLOW_DOCTYPE_DECLAIRATION = "http://apache.org/xml/features/disallow-doctype-decl";
 
-    private final String EXTERNAL_GENERAL_ENTITIES_FEATURE = "http://xml.org/sax/features/external-general-entities";
+    private static final String EXTERNAL_GENERAL_ENTITIES_FEATURE =
+            "http://xml.org/sax/features/external-general-entities";
 
-    private final String EXTERNAL_PARAMETER_ENTITIES_FEATURE =
+    private static final String EXTERNAL_PARAMETER_ENTITIES_FEATURE =
             "http://xml.org/sax/features/external-parameter-entities";
 
     private URI uri;
@@ -58,6 +61,8 @@ public class DocumentFactoryTest {
     @Mock
     private SAXParserFactory mockSaxParserFactory;
 
+    private final Map<String, Boolean> features = new HashMap<>();
+
     @Mock
     private SAXParser mockSaxParser;
 
@@ -66,11 +71,13 @@ public class DocumentFactoryTest {
 
     @Before
     public void before() throws Exception {
-        uri = new URI("http://geotools.org");
-        hints = new HashMap<>();
+        this.uri = new URI("http://geotools.org");
+        this.hints = new HashMap<>();
 
         MockitoAnnotations.openMocks(this);
         hints.put(XMLHandlerHints.SAX_PARSER_FACTORY, mockSaxParserFactory);
+
+        // mock factory parser
         when(mockSaxParserFactory.newSAXParser()).thenReturn(mockSaxParser);
 
         Answer<Void> startDocumentAnswer = invocationOnMock -> {
@@ -80,6 +87,21 @@ public class DocumentFactoryTest {
         };
         doAnswer(startDocumentAnswer).when(mockSaxParser).parse(anyString(), any(XMLSAXHandler.class));
         doAnswer(startDocumentAnswer).when(mockSaxParser).parse(any(InputStream.class), any(XMLSAXHandler.class));
+
+        // mock factory features (stateful which is annoying)
+        Answer<Void> setFeatureAnswer = invocationOnMock -> {
+            String name = invocationOnMock.getArgument(0);
+            Boolean value = invocationOnMock.getArgument(1);
+            features.put(name, value);
+            return null;
+        };
+
+        Answer<Boolean> getFeatureAnswer = invocationOnMock -> {
+            String name = invocationOnMock.getArgument(0);
+            return features.getOrDefault(name, Boolean.FALSE);
+        };
+        doAnswer(setFeatureAnswer).when(mockSaxParserFactory).setFeature(anyString(), anyBoolean());
+        when(mockSaxParserFactory.getFeature(anyString())).thenAnswer(getFeatureAnswer);
     }
 
     @Test
@@ -91,6 +113,7 @@ public class DocumentFactoryTest {
     @Test
     public void testGetInstanceFromURIWithSpecifiedLevelAndDisableExternalEntitiesTrue() throws Exception {
         hints.put(DocumentFactory.DISABLE_EXTERNAL_ENTITIES, Boolean.TRUE);
+        hints.put(DocumentFactory.ENABLE_DTD, Boolean.TRUE);
         DocumentFactory.getInstance(uri, hints, Level.WARNING);
 
         verifyDisableExternalEntities(true);
@@ -132,6 +155,7 @@ public class DocumentFactoryTest {
     @Test
     public void testGetInstanceFromInputStreamWithSpecifiedLevelAndDisableExternalEntitiesTrue() throws Exception {
         hints.put(DocumentFactory.DISABLE_EXTERNAL_ENTITIES, Boolean.TRUE);
+        hints.put(DocumentFactory.ENABLE_DTD, Boolean.TRUE);
         DocumentFactory.getInstance(inputStream, hints, Level.WARNING);
 
         verifyDisableExternalEntities(true);
@@ -164,17 +188,20 @@ public class DocumentFactoryTest {
     void verifyDisableExternalEntities(boolean disabledExternalEntities)
             throws SAXNotRecognizedException, SAXNotSupportedException, ParserConfigurationException {
 
-        // double check DTD support disabled
-        // verify(mockSaxParserFactory).setFeature(DISALLOW_DOCTYPE_DECLAIRATION, true);
-        verify(mockSaxParserFactory).setFeature(LOAD_EXTERNAL_DTD, false);
+        assertTrue(XMLConstants.FEATURE_SECURE_PROCESSING, features.get(XMLConstants.FEATURE_SECURE_PROCESSING));
 
-        // check optional eternal entity disabled
+        // double external entity support disabled
         if (disabledExternalEntities) {
-            verify(mockSaxParserFactory).setFeature(EXTERNAL_GENERAL_ENTITIES_FEATURE, false);
-            verify(mockSaxParserFactory).setFeature(EXTERNAL_PARAMETER_ENTITIES_FEATURE, false);
+            // DTD support is used for force use of external entities
+            assertFalse(DISALLOW_DOCTYPE_DECLAIRATION, features.get(DISALLOW_DOCTYPE_DECLAIRATION));
+
+            assertFalse(EXTERNAL_GENERAL_ENTITIES_FEATURE, features.get(EXTERNAL_GENERAL_ENTITIES_FEATURE));
+            assertFalse(EXTERNAL_PARAMETER_ENTITIES_FEATURE, features.get(EXTERNAL_PARAMETER_ENTITIES_FEATURE));
         } else {
-            verify(mockSaxParserFactory, never()).setFeature(EXTERNAL_GENERAL_ENTITIES_FEATURE, false);
-            verify(mockSaxParserFactory, never()).setFeature(EXTERNAL_PARAMETER_ENTITIES_FEATURE, false);
+            assertTrue(DISALLOW_DOCTYPE_DECLAIRATION, features.get(DISALLOW_DOCTYPE_DECLAIRATION));
+
+            assertTrue(EXTERNAL_GENERAL_ENTITIES_FEATURE, features.get(EXTERNAL_GENERAL_ENTITIES_FEATURE));
+            assertTrue(EXTERNAL_PARAMETER_ENTITIES_FEATURE, features.get(EXTERNAL_PARAMETER_ENTITIES_FEATURE));
         }
     }
 }

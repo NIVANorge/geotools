@@ -36,6 +36,7 @@ import javax.imageio.ImageIO;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.lang3.StringUtils;
 import org.geotools.api.filter.Filter;
@@ -105,11 +106,10 @@ import org.geotools.styling.ShadedReliefImpl;
 import org.geotools.styling.UomOgcMapping;
 import org.geotools.styling.UserLayerImpl;
 import org.geotools.util.Base64;
-import org.geotools.util.DefaultEntityResolver;
 import org.geotools.util.GrowableInternationalString;
-import org.geotools.util.NullEntityResolver;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.util.factory.GeoTools;
+import org.geotools.util.factory.Hints;
 import org.geotools.xml.XMLUtils;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Element;
@@ -121,7 +121,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 /**
- * TODO: This really needs to be container ready
+ * Utility methods for working with SLD content.
  *
  * @author jgarnett
  */
@@ -195,9 +195,22 @@ public class SLDParser {
 
     protected StyleFactory factory;
 
+    /** Support use of DOCTYPE DTD references, default {@code false}. */
+    protected boolean supportDTD = false;
+
+    /** Support entity resolution expansion, default {@code false}. */
+    protected boolean expandEntityReferences = false;
+
+    /** Support XInclude , default {@code false}. */
+    protected boolean xinclude = false;
+
+    /** Support validating , default {@code false}. */
+    protected boolean validating = false;
+
     /** provides complete control for detecting relative onlineresources */
     private ResourceLocator onlineResourceLocator;
 
+    /** Provide control of entity resolution, use EntityResolver3 to limit protocols supported. */
     private EntityResolver entityResolver;
 
     private boolean disposeInputSource;
@@ -205,7 +218,7 @@ public class SLDParser {
     private final ExpressionDOMParser expressionDOMParser = new ExpressionDOMParser(FF);
 
     /**
-     * Create a Stylereader - use if you already have a dom to parse.
+     * Create a SLDParser - use if you already have a dom to parse.
      *
      * @param factory The StyleFactory to use to build the style
      */
@@ -220,7 +233,7 @@ public class SLDParser {
     }
 
     /**
-     * Creates a new instance of SLDStyler
+     * Creates a new instance of SLDParser.
      *
      * @param factory The StyleFactory to use to read the file
      * @param filename The file to be read.
@@ -352,6 +365,86 @@ public class SLDParser {
         this.entityResolver = entityResolver;
     }
 
+    /**
+     * Use of DTD is not recommended, and is {@code false} by default. May be set to true {@cpde true} if required for
+     * XML using DOCTYPE.
+     *
+     * @return {@code false} to prevent support of DTD, or {@code true} if required.
+     */
+    public boolean isSupportDTD() {
+        return supportDTD;
+    }
+
+    /**
+     * Use of DTD is not recommended, and is {@code false} by default.
+     *
+     * @param supportDTD {@code false} to prevent support of DTD, {@cpde true} if required for XML using DOCTYPE.
+     */
+    public void setSupportDTD(boolean supportDTD) {
+        this.supportDTD = supportDTD;
+    }
+
+    /**
+     * Use of expand entity references is not recommended, and is {@code false} by default. May be set to true
+     * {@cpde true} DOCTYPE is used to define injected entities.
+     *
+     * @return {@code false} to prevent support of expanding entity references, or {@code true} if required.
+     */
+    public boolean isExpandEntityReferences() {
+        return expandEntityReferences;
+    }
+
+    /**
+     * Use of expand entity references is not recommended, and is {@code false} by default. May be set to {@code true}
+     * if DOCTYPE is used to to define references.
+     *
+     * @param expandEntityReferences Use {@code false} to prevent support of expanding entity references, or
+     *     {@code true} if required.
+     */
+    public void setExpandEntityReferences(boolean expandEntityReferences) {
+        this.expandEntityReferences = expandEntityReferences;
+    }
+
+    /**
+     * Use of XInclude is not recommended, and is {@code false} by default. May be set to {@code true} to support
+     * inclusion of xsd content.
+     *
+     * @param xinclude Use {@code false} to prevent use of XInclude, or {@code true} if required.
+     */
+    public void setXInclude(boolean xinclude) {
+        this.xinclude = xinclude;
+    }
+
+    /**
+     * Use of XInclude is not recommended, and is {@code false} by default. May be set to {@code true} to support
+     * inclusion of xsd content.
+     *
+     * @return Use {@code false} to prevent use of XInclude, or {@code true} if required.
+     */
+    public boolean getXInclude() {
+        return this.xinclude;
+    }
+
+    /**
+     * Use of validating is not required, and is {@code false} by default. Use of validating,
+     *
+     * @param validating Use {@code false} to parse document without validation, or {@code true} to validate using
+     *     {@code XMLConstants.W3C_XML_SCHEMA_NS_URI}.
+     */
+    public void setValidating(boolean validating) {
+        this.validating = validating;
+    }
+
+    /**
+     * Use of validating is not required, and is {@code false} by default.
+     *
+     * @return Use {@code false} to parse document without validation, or {@code true} to validate using
+     *     {@code XMLConstants.W3C_XML_SCHEMA_NS_URI}.
+     */
+    public boolean getValidating() {
+        return this.validating;
+    }
+
     /** Internal setter for source url. */
     void setSourceUrl(URL sourceUrl) {
         if (onlineResourceLocator instanceof DefaultResourceLocator locator) {
@@ -368,33 +461,42 @@ public class SLDParser {
      */
     protected javax.xml.parsers.DocumentBuilder newDocumentBuilder(boolean namespaceAware)
             throws ParserConfigurationException {
-        javax.xml.parsers.DocumentBuilderFactory dbf = XMLUtils.newDocumentBuilderFactory();
+        Hints hints = GeoTools.getDefaultHints();
+        if (entityResolver != null) {
+            hints.put(Hints.ENTITY_RESOLVER, entityResolver);
+        }
+
+        javax.xml.parsers.DocumentBuilderFactory dbf = XMLUtils.newDocumentBuilderFactory(hints);
         dbf.setNamespaceAware(namespaceAware);
+        if (validating) {
+            dbf.setValidating(true);
+            dbf.setAttribute(
+                    "http://java.sun.com/xml/jaxp/properties/schemaLanguage", XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        }
+        // XSD configuration
+        try {
+            if (dbf.isXIncludeAware() != xinclude) dbf.setXIncludeAware(xinclude);
+        } catch (UnsupportedOperationException e) {
+            LOGGER.fine("setXIncludeAware setting not supported: "
+                    + factory.getClass().getName());
+        }
 
-        if (entityResolver != null) {
-            try {
-                if (entityResolver == DefaultEntityResolver.INSTANCE) {
-                    dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "http");
-                } else if (entityResolver == NullEntityResolver.INSTANCE) {
-                    dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "all");
-                } else {
-                    dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "file,http");
-                }
-            } catch (IllegalArgumentException notSupported) {
-                LOGGER.fine("Parser does not support ACCESS_EXTERNAL_DTD: " + notSupported.getMessage());
+        // DTD configuration
+        XMLUtils.supportDTD(dbf, this.supportDTD, hints);
+        try {
+            if (this.expandEntityReferences && !this.supportDTD) {
+                throw new IllegalStateException(
+                        "SLDParser expandEntityReferences is set to true, but supportDTD is false.");
             }
-            dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-
-            dbf.setFeature("http://xml.org/sax/features/external-general-entities", true);
+            // Expand entity references also requires Document Type Definition to define declaration
+            if (dbf.isExpandEntityReferences() != (this.expandEntityReferences && this.supportDTD))
+                dbf.setExpandEntityReferences(this.expandEntityReferences && this.supportDTD);
+        } catch (UnsupportedOperationException e) {
+            LOGGER.fine("setExpandEntityReferences setting not supported: "
+                    + factory.getClass().getName());
         }
 
-        javax.xml.parsers.DocumentBuilder db = XMLUtils.newDocumentBuilder(dbf);
-        if (entityResolver != null) {
-            db.setEntityResolver(entityResolver);
-        } else {
-            db.setEntityResolver(GeoTools.getEntityResolver(null));
-        }
+        javax.xml.parsers.DocumentBuilder db = XMLUtils.newDocumentBuilder(dbf, hints);
 
         return db;
     }
@@ -407,7 +509,8 @@ public class SLDParser {
      */
     public Style[] readXML() {
         try {
-            dom = newDocumentBuilder(true).parse(source);
+            DocumentBuilder documentBuilder = newDocumentBuilder(true);
+            dom = documentBuilder.parse(source);
         } catch (ParserConfigurationException | IOException | SAXException pce) {
             throw new RuntimeException(pce);
         } finally {

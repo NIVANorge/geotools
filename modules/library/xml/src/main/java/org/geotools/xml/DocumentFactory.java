@@ -58,21 +58,33 @@ import org.xml.sax.SAXException;
 public class DocumentFactory {
 
     /**
-     * When this hint is contained and set to Boolean.FALSE, element ordering will not be validated. This key may also
-     * affect data validation within the parse routines. The inherent safety of the resulting objects is weekend by
-     * turning this param to false.
+     * When this hint is contained and set to {@code Boolean.FALSE}, element ordering will not be validated. This key
+     * may also affect data validation within the parse routines.
+     *
+     * <p>The inherent safety of the resulting objects is weakened by turning this param to {@code false}.
      */
     public static final String VALIDATION_HINT = "DocumentFactory_VALIDATION_HINT";
 
     /**
-     * When this hint is contained and set to Boolean.TRUE, external entities will be disabled. This setting is used to
-     * alleviate XXE attacks, preventing both {@link #VALIDATION_HINT} and {@link XMLHandlerHints#ENTITY_RESOLVER} from
-     * being effective.
+     * When this hint is contained and set to {@code Boolean.TRUE} (the default value), external entities will be
+     * disabled.
+     *
+     * <p>This setting is used to alleviate XXE attacks, preventing both {@link #VALIDATION_HINT} and
+     * {@link XMLHandlerHints#ENTITY_RESOLVER} from being effective.
      */
     public static final String DISABLE_EXTERNAL_ENTITIES = "DocumentFactory_DISABLE_EXTERNAL_ENTITIES";
 
     /**
-     * calls getInstance(URI,Level) with Level.WARNING
+     * When this hint is contained and set to {@code Boolean.TRUE}, parsing and validation supports use of DTD.
+     *
+     * <p>A few standards such as SLD1.0 and WMS1.1 make use of DTD support and require this hint to be set to true.
+     */
+    public static final String ENABLE_DTD = "DocumentFactory_ENABLE_DTD";
+
+    public static final String LOG_LEVEL = "DocumentFactory_LOG_LEVEL";
+
+    /**
+     * Calls getInstance(URI,Level) with Level.WARNING.
      *
      * @param hints May be null.
      * @return Object
@@ -88,14 +100,15 @@ public class DocumentFactory {
      *
      * @param hints May be null.
      * @return Object
-     * @see DocumentFactory#getInstance(URI, Map, Level, boolean)
      */
-    public static Object getInstance(URI desiredDocument, Map<String, Object> hints, Level level) throws SAXException {
+    public static Object getInstance(URI desiredDocument, Map<String, Object> hints, Level defaultLevel)
+            throws SAXException {
         SAXParser parser = getParser(hints);
 
         XMLSAXHandler xmlContentHandler = new XMLSAXHandler(desiredDocument, hints);
-        XMLSAXHandler.setLogLevel(level);
 
+        Level level = hint(Level.class, hints, LOG_LEVEL, defaultLevel);
+        XMLSAXHandler.setLogLevel(level);
         try {
             parser.parse(desiredDocument.toString(), xmlContentHandler);
         } catch (IOException e) {
@@ -109,28 +122,32 @@ public class DocumentFactory {
      * Parses the instance data provided. This method assumes that the XML document is fully described using XML
      * Schemas. Failure to be fully described as Schemas will result in errors, as opposed to a vid parse.
      *
-     * @param hints May be null.
-     * @return Object
-     * @see DocumentFactory#getInstance(InputStream, Map, Level, boolean)
+     * @param is InputStream to parse, will be closed by this method.
+     * @param hints DocumentFactory parsing hints
+     * @param defaultLevel Log level to use for logging during parsing, may be null (defaults to Level.WARNING).
+     * @return Parsed
+     * @throws SAXException If an error occurs during parsing, or if the provided InputStream cannot be read.
      */
-    public static Object getInstance(InputStream is, Map<String, Object> hints, Level level) throws SAXException {
+    public static Object getInstance(InputStream is, Map<String, Object> hints, Level defaultLevel)
+            throws SAXException {
         SAXParser parser = getParser(hints);
 
         XMLSAXHandler xmlContentHandler = new XMLSAXHandler(hints);
+        Level level = hint(Level.class, hints, LOG_LEVEL, defaultLevel);
         XMLSAXHandler.setLogLevel(level);
-
         try {
             parser.parse(is, xmlContentHandler);
         } catch (IOException e) {
-            XMLSAXHandler.logger.warning(e.toString());
             throw new SAXException(e);
         }
-
         return xmlContentHandler.getDocument();
     }
 
     /*
      * Convenience method to create an instance of a SAXParser if it is null.
+     *
+     * Tests can request SAXParser configuration using hints {@code ENTITY_RESOLVER}, {@code SAX_PARSER_FACTORY},
+     * {@code ENABLE_DTD}, {@code DISABLE_EXTERNAL_ENTITIES}.
      */
     private static SAXParser getParser(Map<String, Object> hints) throws SAXException {
 
@@ -148,31 +165,69 @@ public class DocumentFactory {
         }
         saxParserFactory.setNamespaceAware(true);
         saxParserFactory.setValidating(false);
-
         try {
             // Extra precaution to reduce/prevent XXE attacks
             //
             // For more info: https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Processing
             // https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Prevention_Cheat_Sheet
 
-            // Step 1 distable DTD support - not needed for schema driven parser
+            boolean enableDTD = hint(hints, ENABLE_DTD, false);
+
+            // Step 1 Factory Disable/enable DTD support - not needed for schema driven parser
             //
             // Note: XMLSaxHandler will reject all DTD references - but we may as well avoid early
-            // spf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            saxParserFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            XMLUtils.supportDTD(saxParserFactory, enableDTD, factoryConfig);
 
-            // Step 2 optionally disable external entities
-            //
-            if (hints != null
-                    && hints.containsKey(DISABLE_EXTERNAL_ENTITIES)
-                    && Boolean.TRUE.equals(hints.get(DISABLE_EXTERNAL_ENTITIES))) {
-                saxParserFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-                saxParserFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            }
-            SAXParser sp = XMLUtils.newSAXParser(saxParserFactory, factoryConfig);
-            return sp;
+            // Step 2 Factory optionally disable external entities
+            boolean disableExternalEntities = hint(hints, DISABLE_EXTERNAL_ENTITIES, enableDTD);
+            saxParserFactory.setFeature(
+                    "http://xml.org/sax/features/external-general-entities", !disableExternalEntities);
+            saxParserFactory.setFeature(
+                    "http://xml.org/sax/features/external-parameter-entities", !disableExternalEntities);
+
+            // Step 3 Parser external access based on entityResolver used
+            SAXParser parser = XMLUtils.newSAXParser(saxParserFactory, factoryConfig);
+            XMLUtils.supportDTD(parser, enableDTD, factoryConfig);
+
+            return parser;
         } catch (ParserConfigurationException e) {
             throw new SAXException(e);
         }
+    }
+
+    /**
+     * Safely check hints for provided key.
+     *
+     * @param hints Map of hints, may be {@null} if not provided.
+     * @param key Key to look up hint value
+     * @param defaultValue Default value returned if value is not available, or not a {@code Boolean}.
+     * @return Value of hint if available and a {@code Boolean}, otherwise {@code defaultValue}.
+     */
+    public static <T> T hint(Class<T> type, Map<String, Object> hints, String key, T defaultValue) {
+        if (key != null && hints != null && hints.containsKey(key)) {
+            Object value = hints.get(key);
+            if (type.isInstance(value)) {
+                return type.cast(value);
+            }
+        }
+        return defaultValue;
+    }
+
+    /**
+     * Safely check hints for provided key.
+     *
+     * @param hints Map of hints, may be {@null} if not provided.
+     * @param key Key to look up hint value
+     * @param defaultValue Default value returned if value is not available, or not a {@code Boolean}.
+     * @return Value of hint if available and a {@code Boolean}, otherwise {@code defaultValue}.
+     */
+    public static boolean hint(Map<String, Object> hints, String key, boolean defaultValue) {
+        if (key != null && hints != null && hints.containsKey(key)) {
+            Object value = hints.get(key);
+            if (value instanceof Boolean) {
+                return (Boolean) value;
+            }
+        }
+        return defaultValue;
     }
 }

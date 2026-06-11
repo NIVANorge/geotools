@@ -6,12 +6,12 @@
   <parent>
     <groupId>org.geotools</groupId>
     <artifactId>unsupported</artifactId>
-    <version>35.3-NIVA</version>
+    <version>35.4-NIVA</version>
   </parent>
 
   <groupId>org.geotools.jdbc</groupId>
   <artifactId>gt-jdbc-h2gis</artifactId>
-  <version>35.3-NIVA</version>
+  <version>35.4-NIVA</version>
   <packaging>jar</packaging>
 
   <!-- Project Information -->

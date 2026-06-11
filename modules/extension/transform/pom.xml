@@ -8,7 +8,7 @@
   <parent>
     <groupId>org.geotools</groupId>
     <artifactId>extension</artifactId>
-    <version>35.3-NIVA</version>
+    <version>35.4-NIVA</version>
   </parent>
 
   <!-- =========================================================== -->

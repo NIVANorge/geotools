@@ -33,6 +33,7 @@ import org.geotools.xsd.impl.ElementHandler;
 import org.geotools.xsd.impl.NodeImpl;
 import org.geotools.xsd.impl.ParserHandler;
 import org.geotools.xsd.impl.ParserHandler.ContextCustomizer;
+import org.xml.sax.EntityResolver;
 import org.xml.sax.SAXException;
 
 /**
@@ -80,6 +81,11 @@ public class PullParser implements Closeable {
     public void setURIHandler(URIHandler uriHandler) {
         this.handler.getURIHandlers().clear();
         this.handler.getURIHandlers().add(uriHandler);
+    }
+
+    /** Changes the EntityResolver for this parser */
+    public void setEntityResolver(EntityResolver entityResolver) {
+        this.handler.setEntityResolver(entityResolver);
     }
 
     public Object parse() throws XMLStreamException, IOException, SAXException {

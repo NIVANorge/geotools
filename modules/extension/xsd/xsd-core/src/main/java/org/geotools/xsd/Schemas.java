@@ -149,13 +149,7 @@ public class Schemas {
                 LOGGER.fine("looking up schema for " + conf.getNamespaceURI());
             }
 
-            XSDSchemaLocator locator = new SchemaLocator(conf.getXSD());
-
-            if (locator == null) {
-                LOGGER.fine("No schema locator for " + conf.getNamespaceURI());
-
-                continue;
-            }
+            SchemaLocator locator = new SchemaLocator(conf.getXSD());
 
             String namespaceURI = conf.getNamespaceURI();
             String schemaLocation = null;

@@ -28,6 +28,7 @@ import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.api.feature.type.FeatureType;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.data.wfs.internal.GetFeatureRequest;
 import org.geotools.data.wfs.internal.GetParser;
 import org.geotools.data.wfs.internal.WFSConfig;
 import org.geotools.geometry.jts.GeometryCoordinateSequenceTransformer;
@@ -39,6 +40,7 @@ import org.geotools.xsd.PullParser;
 import org.geotools.xsd.impl.ParserHandler.ContextCustomizer;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.xml.sax.EntityResolver;
 import org.xml.sax.SAXException;
 
 /**
@@ -65,6 +67,36 @@ public class PullParserFeatureReader implements GetParser<SimpleFeature> {
 
     private XsdHttpHandler httpHandler = null;
 
+    PullParserFeatureReader(
+            final Configuration wfsConfiguration,
+            final InputStream getFeatureResponseStream,
+            final FeatureType featureType,
+            final GetFeatureRequest request)
+            throws IOException {
+        this.inputStream = getFeatureResponseStream;
+        this.featureType = featureType;
+        this.axisOrder = request.getStrategy().getConfig().getAxisOrder();
+        this.parser = new PullParser(
+                wfsConfiguration,
+                getFeatureResponseStream,
+                new QName(
+                        featureType.getName().getNamespaceURI(),
+                        featureType.getName().getLocalPart()));
+
+        HTTPClient httpClient = request.getHTTPClient();
+        if (httpClient != null) {
+            this.httpHandler = new XsdHttpHandler(httpClient);
+            this.parser.setURIHandler(httpHandler);
+        }
+        EntityResolver entityResolver = request.getStrategy().getConfig().getEntityResolver();
+        if (entityResolver != null) {
+            this.parser.setEntityResolver(entityResolver);
+        }
+        transformer = new GeometryCoordinateSequenceTransformer();
+        transformer.setMathTransform(new AffineTransform2D(0, 1, 1, 0, 0, 0));
+    }
+
+    @Deprecated()
     public PullParserFeatureReader(
             final Configuration wfsConfiguration,
             final InputStream getFeatureResponseStream,
@@ -86,6 +118,7 @@ public class PullParserFeatureReader implements GetParser<SimpleFeature> {
     }
 
     /** Initialise a feature reader with the used http client, to ensure reuse of the configuration. */
+    @Deprecated()
     public PullParserFeatureReader(
             final Configuration wfsConfiguration,
             final InputStream getFeatureResponseStream,

@@ -164,6 +164,10 @@ public class PullParserFeatureReader implements GetParser<SimpleFeature> {
         if (parsed == null) {
             return null;
         }
+        if (!(parsed instanceof SimpleFeature)) {
+            throw new IOException(
+                    "Couldn't parse SimpleFeature of type " + featureType + " from xml.\n" + entriesInMap(parsed));
+        }
         if (LOGGER.isLoggable(Level.FINE)) {
             logCounter++;
             long time = System.currentTimeMillis();
@@ -174,10 +178,6 @@ public class PullParserFeatureReader implements GetParser<SimpleFeature> {
                 LOGGER.fine("Number of features parsed: %d".formatted(logCounter));
                 lastLogMessage = time;
             }
-        }
-        if (!(parsed instanceof SimpleFeature)) {
-            throw new IOException(
-                    "Couldn't parse SimpleFeature of type " + featureType + " from xml.\n" + entriesInMap(parsed));
         }
         SimpleFeature feature = (SimpleFeature) parsed;
         if (feature.getDefaultGeometry() != null) {

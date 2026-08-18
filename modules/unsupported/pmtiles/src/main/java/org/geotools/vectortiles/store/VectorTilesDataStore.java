@@ -19,7 +19,7 @@ package org.geotools.vectortiles.store;
 import static java.util.Objects.requireNonNull;
 
 import io.tileverse.jackson.databind.tilejson.v3.VectorLayer;
-import io.tileverse.pmtiles.store.VectorTileStore;
+import io.tileverse.vectortile.store.VectorTileStore;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -75,7 +75,12 @@ public abstract class VectorTilesDataStore extends ContentDataStore {
     public static final GeometryFactory DEFAULT_GEOMETRY_FACTORY =
             new GeometryFactory(new PackedCoordinateSequenceFactory());
 
+    /** Default value for {@link #setDisplayTileSize(int)}, matching the Protomaps/MapLibre/Mapbox GL convention. */
+    public static final int DEFAULT_DISPLAY_TILE_SIZE = 512;
+
     private VectorTileStore tileStore;
+
+    private int displayTileSize = DEFAULT_DISPLAY_TILE_SIZE;
 
     /**
      * Creates a new vector tiles datastore.
@@ -102,6 +107,28 @@ public abstract class VectorTilesDataStore extends ContentDataStore {
      */
     public VectorTileStore getTileStore() {
         return this.tileStore;
+    }
+
+    /**
+     * Returns the tile size (in pixels) that a rendering client is assumed to display each tile at when picking a zoom
+     * level for a given screen resolution.
+     *
+     * @see #setDisplayTileSize(int)
+     */
+    public int getDisplayTileSize() {
+        return displayTileSize;
+    }
+
+    /**
+     * Sets the tile size (in pixels) rendering clients of this dataset are assumed to display each tile at.
+     *
+     * <p>Protomaps and the MapLibre/Mapbox GL family target 512px, regardless of the tile matrix's own pixel width
+     * (typically 256). This can't be derived from the tile data, so it must be configured per dataset.
+     *
+     * @param displayTileSize the display tile size in pixels, defaults to {@value #DEFAULT_DISPLAY_TILE_SIZE}
+     */
+    public void setDisplayTileSize(int displayTileSize) {
+        this.displayTileSize = displayTileSize;
     }
 
     /**

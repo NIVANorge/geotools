@@ -35,7 +35,6 @@ import io.tileverse.storage.StorageParameter;
 import io.tileverse.storage.azure.AzureBlobStorageProvider;
 import io.tileverse.storage.gcs.GoogleCloudStorageProvider;
 import io.tileverse.storage.s3.S3StorageProvider;
-import io.tileverse.storage.spi.AbstractStorageProvider;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -94,6 +93,19 @@ public class PMTilesDataStoreFactoryTest {
         assertEquals(URIP, parametersInfo[1]);
 
         assertCachingParameters(parametersInfo);
+    }
+
+    @Test
+    public void testGetParametersInfoLeavesOutBatchTuning() {
+        List<String> batchKeys = new S3StorageProvider()
+                .getParameters().stream()
+                        .filter(PMTilesDataStoreFactoryTest::isBatchTuning)
+                        .map(StorageParameter::key)
+                        .toList();
+        assertFalse(batchKeys.isEmpty());
+
+        Param[] parametersInfo = new PMTilesDataStoreFactory().getParametersInfo();
+        assertTrue(Stream.of(parametersInfo).noneMatch(p -> batchKeys.contains(p.key)));
     }
 
     @Test
@@ -157,18 +169,22 @@ public class PMTilesDataStoreFactoryTest {
     }
 
     private void assertParams(List<StorageParameter<?>> expected, Param[] actual) {
-        expected = new ArrayList<>(expected);
-        expected.remove(AbstractStorageProvider.MEMORY_CACHE_BLOCK_ALIGNED);
-        expected.remove(AbstractStorageProvider.MEMORY_CACHE_BLOCK_SIZE);
-
         List<Param> dataStoreParams = new ArrayList<>(Arrays.asList(actual));
         dataStoreParams.remove(URIP);
         dataStoreParams.remove(NAMESPACEP);
 
         for (StorageParameter<?> param : expected) {
+            if (isBatchTuning(param)) {
+                continue;
+            }
             Param expectedParam = RangeReaderParams.dataStoreParam(param);
             assertTrue(dataStoreParams.contains(expectedParam));
         }
+    }
+
+    /** The batch-read tuning is left out of the datastore parameters, see {@link RangeReaderParams#PROVIDER_PARAMS} */
+    private static boolean isBatchTuning(StorageParameter<?> param) {
+        return StorageParameter.GROUP_BATCH.equals(param.group());
     }
 
     private void assertCachingParameters(Param[] parametersInfo) {

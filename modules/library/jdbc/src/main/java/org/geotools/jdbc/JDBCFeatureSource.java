@@ -655,7 +655,10 @@ public class JDBCFeatureSource extends ContentFeatureSource {
             if (e instanceof Error error) {
                 throw error;
             } else {
-                throw (IOException) new IOException().initCause(e);
+                IOException ioe =
+                        new IOException("Error creating feature reader in " + getName() + " for query: " + query);
+                ioe.initCause(e);
+                throw ioe;
             }
         }
 

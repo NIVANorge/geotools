@@ -757,6 +757,9 @@ public final class GeoTools {
                 "org.geotools.util.logging.DefaultLoggerFactory"
             };
             for (String factoryName : CANDIDATES) {
+                if ("org.geotools.util.logging.Log4J2LoggerFactory".equals(factoryName) && !isLog4jCoreAvailable()) {
+                    continue; // skip log4j2 if core is not available
+                }
                 try {
                     Logging.ALL.setLoggerFactory(factoryName);
                     if ("org.geotools.util.logging.CommonsLoggerFactory".equals(factoryName)) {
@@ -779,6 +782,15 @@ public final class GeoTools {
                 || Logging.ALL.getLoggerFactory() == DefaultLoggerFactory.getInstance()) {
             // if java logging is used, force monoline console output.
             Logging.ALL.forceMonolineConsoleOutput();
+        }
+    }
+
+    private static boolean isLog4jCoreAvailable() {
+        try {
+            Class.forName("org.apache.logging.log4j.core.LoggerContext");
+            return true;
+        } catch (ClassNotFoundException | LinkageError e) {
+            return false;
         }
     }
     /**

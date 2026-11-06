@@ -15,7 +15,7 @@
 
   <properties>
     <batik.version>1.18</batik.version>
-    <clickhouse-jdbc.version>0.6.4</clickhouse-jdbc.version>
+    <clickhouse-jdbc.version>0.10.0</clickhouse-jdbc.version>
     <commons-beanutils.version>1.11.0</commons-beanutils.version>
     <commons-cli.version>1.4</commons-cli.version>
     <commons-collections.version>3.2.2</commons-collections.version>
@@ -25,7 +25,7 @@
     <commons-exec.version>1.3</commons-exec.version>
     <commons-io.version>2.21.0</commons-io.version>
     <commons-jxpath.version>1.4.0</commons-jxpath.version>
-    <commons-lang3.version>3.18.0</commons-lang3.version>
+    <commons-lang3.version>3.20.0</commons-lang3.version>
     <commons-logging.version>1.3.5</commons-logging.version>
     <commons-pool.version>1.5.4</commons-pool.version>
     <commons-text.version>1.15.0</commons-text.version>
@@ -38,7 +38,7 @@
     <ejml-ddense.version>0.41</ejml-ddense.version>
     <geodb.version>0.9</geodb.version>
     <geographiclib-java.version>1.49</geographiclib-java.version>
-    <guava.version>33.5.0-jre</guava.version>
+    <guava.version>33.7.1-jre</guava.version>
     <h2.version>2.2.224</h2.version>
     <hsqldb.version>2.7.4</hsqldb.version>
     <httpclient4.version>4.5.14</httpclient4.version>
@@ -47,8 +47,8 @@
     <imageio.ext.version>2.1.4</imageio.ext.version>
     <informix.jdbc.version>15.0.1.4</informix.jdbc.version>
     <!-- jackson2 BOM imported for dependency convergence. It must match the version used for jackson-annotations in the jackson3 BOM -->
-    <jackson2.version>2.22.2</jackson2.version>
-    <jackson.version>3.2.3</jackson.version>
+    <jackson2.version>2.22.4</jackson2.version>
+    <jackson.version>3.2.4</jackson.version>
     <jai-imageio.version>1.1</jai-imageio.version>
     <imagen.version>0.9.3</imagen.version>
     <javacsv.version>2.0</javacsv.version>
@@ -69,10 +69,10 @@
     <jtds.jdbc.version>1.3.1</jtds.jdbc.version>
     <jts.version>1.20.0</jts.version>
     <log4j.version>2.26.1</log4j.version>
-    <logback.version>1.5.25</logback.version>
+    <logback.version>1.6.6</logback.version>
     <lz4.version>1.11.4</lz4.version>
-    <mssql-jdbc.version>13.6.0.jre11</mssql-jdbc.version>
-    <mysql-connector-java.version>26.7.0</mysql-connector-java.version>
+    <mssql-jdbc.version>13.6.1.jre11</mssql-jdbc.version>
+    <mysql-connector-java.version>26.10.0</mysql-connector-java.version>
     <mongodb-driver-legacy.version>4.0.6</mongodb-driver-legacy.version>
     <netcdf.version>5.5.3</netcdf.version>
     <ojdbc17.version>23.26.3.0.0</ojdbc17.version>
@@ -84,7 +84,7 @@
     <postgresql.jdbc.version>42.7.14</postgresql.jdbc.version>
     <postgis-driver.version>1.0</postgis-driver.version>
     <re2j.version>1.8</re2j.version>
-    <reload4j.version>1.2.26</reload4j.version>
+    <reload4j.version>1.2.27</reload4j.version>
     <sdoapi.version>10.2.0</sdoapi.version>
     <singlestore-jdbc-version>1.2.12</singlestore-jdbc-version>
     <slf4j.version>2.0.20</slf4j.version>
@@ -633,6 +633,11 @@
       <dependency>
         <groupId>org.apache.httpcomponents.core5</groupId>
         <artifactId>httpcore5</artifactId>
+        <version>${httpcore5.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.httpcomponents.core5</groupId>
+        <artifactId>httpcore5-h2</artifactId>
         <version>${httpcore5.version}</version>
       </dependency>
       <dependency>

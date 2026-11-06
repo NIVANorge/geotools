@@ -405,7 +405,7 @@ public final class Logging {
         Logger logger = Logger.getLogger(name); // Really Java logging, not the redirected one.
         synchronized (EMPTY) {
             final MonolineFormatter f = MonolineFormatter.configureConsoleHandler(logger, level);
-            if (f.getSourceFormat() == null) {
+            if (f != null && f.getSourceFormat() == null) {
                 // Set the source format only if the user didn't specified
                 // an explicit one in the jre/lib/logging.properties file.
                 f.setSourceFormat("class:short");
